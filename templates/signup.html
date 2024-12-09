@@ -1,0 +1,86 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{% static 'assets/images/favicon.png' %}" rel="icon" type="image/png">
+    <title>Sign Up - Social Book</title>
+    <link rel="stylesheet" href="{% static 'assets/css/icons.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/uikit.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/tailwind.css' %}">
+</head>
+
+ <body class="bg-gray-100">
+
+    <div id="wrapper" class="flex flex-col justify-between h-screen">
+        <!-- header, footer, and other elements are unchanged -->
+        <div>
+            <div class="lg:p-12 max-w-md max-w-xl lg:my-0 my-12 mx-auto p-6 space-y-">
+                <h1 class="lg:text-3xl text-xl font-semibold mb-6">Sign Up</h1>
+                <div>
+                    <style>
+                        h5 { color: red; }
+                    </style>
+                    {% for message in messages %}
+                        <h5>{{ message }}</h5>
+                    {% endfor %}
+                </div>
+
+                <!-- Sign-up form -->
+                <form id="signupForm" action="" method="POST">
+                    {% csrf_token %}
+                    {{ form.as_p }}  <!-- Render form fields here (username, email, password, etc.) -->
+                    <input type="hidden" id="id_face_image" name="face_image">
+                    <!-- Capture Face Button -->
+                    <button type="button" onclick="captureFaceImage()" class="bg-blue-500 py-2 px-4 rounded-md text-white text-lg">Capture Face</button>
+
+                    <!-- Sign-Up Button -->
+                    <button type="submit" class="bg-gradient-to-br from-pink-500 py-3 rounded-md text-white text-xl to-red-400 w-full">Sign Up</button>
+                    <div class="text-center mt-5 space-x-2">
+                        <p class="text-base">Already have an account? <a href="/face_login">Login</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Webcam capture script -->
+        <script>
+            function captureFaceImage() {
+                const video = document.createElement('video');
+                const canvas = document.createElement('canvas');
+                video.width = 640;
+                video.height = 480;
+                document.body.appendChild(video);
+
+                navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                    video.srcObject = stream;
+                    video.play();
+
+                    setTimeout(() => {
+                        canvas.getContext('2d').drawImage(video, 0, 0, 640, 480);
+                        const image_data_url = canvas.toDataURL('image/png');
+
+                        console.log("captured Image Data URL:",image_data_url);
+                        document.getElementById('id_face_image').value = image_data_url;  // Store captured image in hidden field
+                        video.pause();
+                        video.srcObject = null;
+                        video.remove();
+                        stream.getTracks()[0].stop();
+
+                        alert("Face image captured!");  // Alert for successful capture
+                    }, 3000);  // Delay for camera adjustment
+                }).catch(error=>{
+                    console.log("Error accessing webcam:",error);
+                    alert("Failed to access the webcam. Please Check Permissions.");
+                });
+            }
+            
+        </script>
+    </div>
+</body> 
+
+</html>
