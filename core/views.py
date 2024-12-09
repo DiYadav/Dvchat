@@ -302,12 +302,6 @@ def face_login(request):
 
 
 
-
-
-
-
-
-
 @login_required(login_url='face_login')
 def about_us(request):
     
