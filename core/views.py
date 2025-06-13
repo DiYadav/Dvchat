@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, auth
 from django.contrib import messages, auth
-from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from .models import Profile, Post, LikePost, FollowersCount
 from itertools import chain
@@ -12,8 +11,12 @@ from io import BytesIO
 from PIL import Image
 import pickle
 import numpy as np
-from .forms import UserRegistrationForm
 import json
+from django.contrib.auth import login as auth_login
+from django.http import JsonResponse
+from django.core.files.base import ContentFile
+import cv2
+
 
 
 @login_required(login_url='face_login')
@@ -209,100 +212,127 @@ def settings(request):
 
 
 
-def signup(request):
+def register(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
-            password = form.cleaned_data['password']
-            face_image_data = form.cleaned_data.get('face_image')
+        username = request.POST.get('username')
+        face_image_data = request.POST.get('face_image')
 
-            if not face_image_data:
-                messages.error(request, "Face image data is missing. Please try again.")
-                return redirect('signup')
+        if not username or not face_image_data:
+            return JsonResponse({'status': 'error', 'message': 'Missing username or face image'}, status=400)
 
-            # Check if the user exists
-            if User.objects.filter(email=email).exists():
-                messages.info(request, 'Email Taken')
-                return redirect('signup')
-            elif User.objects.filter(username=username).exists():
-                messages.info(request, 'Username Taken')
-                return redirect('signup')
+        try:
+            # Decode base64 image
+            face_image_data = face_image_data.split(',')[1]
+            decoded_image = base64.b64decode(face_image_data)
+            face_image = ContentFile(decoded_image, name=f'{username}_face.jpg')
 
-            # Create the user and Profile
-            user = User.objects.create_user(username=username, email=email, password=password)
-            user.save()
-            new_profile = Profile.objects.create(user=user, id_user=user.id)
+            # Convert to OpenCV image
+            np_array = np.frombuffer(decoded_image, np.uint8)
+            img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-            try:
-                # Decode and process the face image data
-                format, imgstr = face_image_data.split(';base64,')
-                decoded_img = base64.b64decode(imgstr)
+            # Get face encoding
+            encodings = face_recognition.face_encodings(img)
+            if not encodings:
+                return JsonResponse({'status': 'error', 'message': 'No face detected'}, status=400)
 
-                img = Image.open(BytesIO(decoded_img))
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
+            encoding = encodings[0].astype(np.float64).tobytes()
 
-                face_encodings = face_recognition.face_encodings(np.array(img))
-                if face_encodings:
-                    new_profile.face_encoding = json.dumps(face_encodings[0].tolist())
-                    new_profile.save()
-                else:
-                    messages.error(request, "No face detected. Please try again.")
-                    return redirect('signup')
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Invalid image: {e}'}, status=400)
 
-            except Exception as e:
-                messages.error(request, "Error processing face image. Please try again.")
-                return redirect('signup')
+        try:
+            if User.objects.filter(username=username).exists():
+                return JsonResponse({'status': 'error', 'message': 'Username already exists'}, status=400)
 
-            return redirect('settings')
+            user = User.objects.create(username=username)
+            Profile.objects.create(
+                user=user,
+                id_user=user.id,
+                face_image=face_image,
+                face_encoding=encoding
+            )
+            return JsonResponse({'status': 'success', 'message': 'Registered successfully', 'redirect': '/face_login/'})
 
-    form = UserRegistrationForm()
-    return render(request, 'signup.html', {'form': form})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': f'Profile creation failed: {e}'}, status=400)
+
+    return render(request, 'register.html')
+
 
 
 def face_login(request):
     if request.method == 'POST':
+        username = request.POST.get('username')
         face_image_data = request.POST.get('face_image')
 
-        if face_image_data:
+        if not username or not face_image_data:
+            return JsonResponse({'status': 'error', 'message': 'Username and face image are required'}, status=400)
+
+        try:
+            # Decode base64 image
+            face_image_data = face_image_data.split(',')[1]
+            decoded_image = base64.b64decode(face_image_data)
+            np_array = np.frombuffer(decoded_image, np.uint8)
+            img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+
+            # Get encoding from captured image
+            input_encodings = face_recognition.face_encodings(img)
+            if not input_encodings:
+                return JsonResponse({'status': 'error', 'message': 'No face detected in image'}, status=400)
+
+            input_encoding = input_encodings[0]
+
             try:
-                # Decode and process the face image data
-                format, imgstr = face_image_data.split(';base64,')
-                decoded_img = base64.b64decode(imgstr)
-                img = Image.open(BytesIO(decoded_img))
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
+                user = User.objects.get(username=username)
+                profile = Profile.objects.get(user=user)
+            except User.DoesNotExist:
+                return JsonResponse({'status': 'error', 'message': 'Username not found'}, status=404)
+            except Profile.DoesNotExist:
+                return JsonResponse({'status': 'error', 'message': 'Profile not found'}, status=404)
 
-                # Get face encoding
-                face_encoding = face_recognition.face_encodings(np.array(img))
-                if face_encoding:
-                    face_encoding = face_encoding[0]
+            if not profile.face_encoding:
+                return JsonResponse({'status': 'error', 'message': 'No face encoding found for this user'}, status=400)
 
-                    # Compare with stored encodings
-                    for profile in Profile.objects.all():
-                        stored_encoding = json.loads(profile.face_encoding)
-                        match = face_recognition.compare_faces([stored_encoding], face_encoding)
+            known_encoding = np.frombuffer(profile.face_encoding, dtype=np.float64)
 
-                        if match[0]:
-                            user = profile.user
-                            auth.login(request, user)
-                            return redirect('index')
+            # Use compare_faces with distance check
+            results = face_recognition.compare_faces([known_encoding], input_encoding, tolerance=0.45)
+            face_distance = face_recognition.face_distance([known_encoding], input_encoding)[0]
 
-                    messages.error(request, "Face not recognized.")
-                else:
-                    messages.error(request, "No face detected. Please try again.")
-            except Exception as e:
-                messages.error(request, "Error processing face image. Please try again.")
+            if results[0] and face_distance < 0.45:
+                auth_login(request, user)
+                return JsonResponse({'status': 'success', 'message': f'Welcome {user.username}', 'redirect': '/home/'})
+            else:
+                return JsonResponse({'status': 'error', 'message': 'Face does not match the username'}, status=401)
 
-        return redirect('face_login')
-    else:
-        return render(request, 'face_login.html')
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return render(request, 'login.html')
 
 
+@login_required
+def home_view(request):
+    return render(request, 'home.html', {'username': request.user.username})
 
-@login_required(login_url='face_login')
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('face_login')
+
+@login_required
+def home_view(request):
+    return render(request, 'home.html', {'username': request.user.username})
+
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('face_login')
+
+
+
 def about_us(request):
     
     return render(request, "about_us.html" )
@@ -320,15 +350,3 @@ def account_setting(request):
 def logout(request):
     auth.logout(request)
     return redirect('face_login')
-
-
-
-
-
-
-
-
-
-
-
-

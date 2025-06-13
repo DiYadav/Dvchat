@@ -1,6 +1,30 @@
-from django import forms
-from django.contrib.auth.models import User
-from .models import *
+# from django import forms
+# from django.contrib.auth.models import User
+# from .models import *
+
+
+# # class UserRegistrationForm(forms.ModelForm):
+# #     password = forms.CharField(widget=forms.PasswordInput)
+# #     password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
+# #     face_image = forms.CharField(widget=forms.HiddenInput, required=False)  # Hidden field for face image data
+
+# #     class Meta:
+# #         model = User
+# #         fields = ['username', 'email']
+
+# #     def clean_password2(self):
+# #         cd = self.cleaned_data
+# #         if cd['password'] != cd['password2']:
+# #             raise forms.ValidationError('Passwords do not match.')
+# #         return cd['password2']
+
+
+# # class UserLoginForm(forms.Form):
+# #     username = forms.CharField()
+# #     password = forms.CharField(widget=forms.PasswordInput)
+
+# # class FaceLoginForm(forms.Form):
+# #     face_image = forms.CharField(widget=forms.HiddenInput)  # Hidden field for face image data
 
 
 # class UserRegistrationForm(forms.ModelForm):
@@ -17,27 +41,5 @@ from .models import *
 #         if cd['password'] != cd['password2']:
 #             raise forms.ValidationError('Passwords do not match.')
 #         return cd['password2']
+    
 
-
-# class UserLoginForm(forms.Form):
-#     username = forms.CharField()
-#     password = forms.CharField(widget=forms.PasswordInput)
-
-# class FaceLoginForm(forms.Form):
-#     face_image = forms.CharField(widget=forms.HiddenInput)  # Hidden field for face image data
-
-
-class UserRegistrationForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
-    face_image = forms.CharField(widget=forms.HiddenInput, required=False)  # Hidden field for face image data
-
-    class Meta:
-        model = User
-        fields = ['username', 'email']
-
-    def clean_password2(self):
-        cd = self.cleaned_data
-        if cd['password'] != cd['password2']:
-            raise forms.ValidationError('Passwords do not match.')
-        return cd['password2']

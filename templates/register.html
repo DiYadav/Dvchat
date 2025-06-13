@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register Page</title>
+  <link rel="stylesheet" href="{% static 'css/register.css' %}" />
+</head>
+<body>
+  <div class="register-container">
+    <h2>Register with Face Recognition</h2>
+
+    <form id="registerForm" method="POST">
+      {% csrf_token %}
+      <input type="text" name="username" id="username" placeholder="Enter Username" required />
+
+      <div class="camera-container">
+        <video id="video" autoplay></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <button type="button" id="capture-button">Capture Face</button>
+        <button type="submit" id="register-button">Register</button>
+      </div>
+    </form>
+
+    <div id="messageDiv"></div>
+    <a href="/face_login"><button type="button" class="secondary-button">Go to Login</button></a>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const captureButton = document.getElementById("capture-button");
+    const registerForm = document.getElementById("registerForm");
+    const messageDiv = document.getElementById("messageDiv");
+    const video = document.getElementById("video");
+
+    let capturedImage = null;
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch(() => {
+        messageDiv.innerText = "Camera not accessible.";
+      });
+
+    captureButton.onclick = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      capturedImage = canvas.toDataURL("image/jpeg");
+      messageDiv.innerText = "Face captured successfully!";
+    };
+
+    registerForm.onsubmit = async (e) => {
+      e.preventDefault();
+      if (!capturedImage) {
+        messageDiv.innerText = "Please capture a face first.";
+        return;
+      }
+
+      const formData = new FormData(registerForm);
+      formData.append("face_image", capturedImage);
+
+      const response = await fetch("/register/", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+      messageDiv.innerText = result.message || "Registration failed";
+
+      if (result.status === "success") {
+        setTimeout(() => {
+          window.location.href = "/face_login";
+        }, 1500);
+      }
+    };
+  </script>
+</body>
+</html>

@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core'
+    'core',
+    'chat'
 ]
 
 MIDDLEWARE = [
@@ -134,3 +135,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+INSTALLED_APPS += ['channels']
+
+ASGI_APPLICATION = 'dvchat.asgi.application'
+LOGIN_URL = '/face_login/'
