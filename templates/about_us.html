@@ -2,184 +2,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us | Dvchat</title>
-    <style>
-        /* General styles */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-        }
-        /* Header styles */
-        header {
-            background-color: #4A90E2;
-            color: #fff;
-            text-align: center;
-            padding: 20px 0;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2.5em;
-        }
-        /* Section styles */
-        .section {
-            padding: 50px 0;
-        }
-        .section h2 {
-            text-align: center;
-            font-size: 2em;
-            margin-bottom: 20px;
-            color: #4A90E2;
-        }
-        /* About section */
-        .about-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-        }
-        .about-content img {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 10px;
-        }
-        .about-text {
-            flex: 1;
-            text-align: justify;
-        }
-        .about-text p {
-            line-height: 1.6;
-            margin: 10px 0;
-        }
-        /* Values section */
-        .values {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .value-box {
-            flex: 1;
-            max-width: 300px;
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .value-box h3 {
-            color: #4A90E2;
-            margin-bottom: 10px;
-        }
-        .value-box p {
-            margin: 0;
-            line-height: 1.6;
-        }
-        /* Team section */
-        .team {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .team-member {
-            text-align: center;
-            max-width: 200px;
-        }
-        .team-member img {
-            width: 100%;
-            border-radius: 50%;
-        }
-        .team-member h4 {
-            margin: 10px 0 5px;
-        }
-        /* Footer styles */
-        footer {
-            text-align: center;
-            background-color: #333;
-            color: #fff;
-            padding: 10px 0;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us | Dvchat</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <!-- Header -->
-    <header>
-        <h1>About Dvchat</h1>
-        <p>Your Social Hub for Meaningful Connections</p>
-        <div class="add-btn">
-            <span style="color: white; font-color:white font-size: 20px; margin-left: 100px;"><b><a href="/">Dvchat</a></b></span>
-        </div>
-    </header>
-
-    <div class="container">
-        
-        <!-- About Section -->
-        <section class="section about">
-            <h2>Welcome to Dvchat</h2>
-            <div class="about-content">
-                <img src="path/to/your/image.jpg" alt="About Dvchat">
-                <div class="about-text">
-                    <p>Dvchat is a social media platform created to connect people around the world in a meaningful and secure way. We believe in building communities that foster positive connections and open communication. At Dvchat, we prioritize user experience, privacy, and innovative features that bring people closer.</p>
-                    <p>Our platform provides unique options such as face recognition login, real-time updates, and powerful tools for personal expression. Whether you're here to stay connected with friends or make new ones, Dvchat is designed to give you a safe and enjoyable social experience.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Core Values Section -->
-        <section class="section values">
-            <h2>Our Core Values</h2>
-            <div class="values">
-                <div class="value-box">
-                    <h3>Privacy First</h3>
-                    <p>Your privacy is our priority. Dvchat is designed with secure authentication, including face recognition, to protect your information and keep your interactions safe.</p>
-                </div>
-                <div class="value-box">
-                    <h3>Innovation</h3>
-                    <p>We're committed to providing the latest features in social media, from face recognition to personalized feeds, making Dvchat a platform like no other.</p>
-                </div>
-                <div class="value-box">
-                    <h3>Community</h3>
-                    <p>At Dvchat, we celebrate diversity and inclusivity, creating a space for everyone to share their voice and connect with others.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Meet the Team Section -->
-        <section class="section team">
-            <h2>Meet Our Team</h2>
-            <div class="team">
-                <div class="team-member">
-                    <img src="{% static 'Dinesh1.jpg' %}" alt="Team Member 1">
-                    <h4>Dinesh Yadav</h4>
-                    <p>CEO & Founder</p>
-                </div>
-                <div class="team-member">
-                    <img src="path/to/team2.jpg" alt="Team Member 2">
-                    <h4>vaibhav Kamble</h4>
-                    <p>Lead Developer</p>
-                </div>
-                {% comment %} <div class="team-member">
-                    <img src="path/to/team3.jpg" alt="Team Member 3">
-                    <h4></h4>
-                    <p>UI/UX Designer</p>
-                </div> {% endcomment %}
-            </div>
-        </section>
+<body class="text-gray-800 font-sans">
+  <!-- Header -->
+  <header class="bg-blue-500 text-white text-center py-6">
+    <h1 class="text-4xl font-bold" mt-2px>About Dvchat</h1>
+    <p class="text-lg">Your Social Hub for Meaningful Connections</p>
+    <div class="flex ">
+      <a href="/" class=""><button class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-gray-800 transition-all duration-300 transform hover:scale-105" type="submit">Let's Back</button></a>
     </div>
+  </header>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 Dvchat | All Rights Reserved</p>
-    </footer>
+  <!-- Container -->
+  <div class="max-w-6xl mx-auto p-6">
 
+    <!-- About Section -->
+    <section class="py-12">
+      <h2 class="text-3xl text-center text-blue-500 font-semibold mb-8">Welcome to Dvchat</h2>
+      <div class="flex flex-col lg:flex-row items-center gap-8">
+        <img src="path/to/your/image.jpg" alt="About Dvchat" class="w-full max-w-md rounded-lg">
+        <div class="text-justify">
+          <p class="mb-4 leading-relaxed">Dvchat is a social media platform created to connect people around the world in a meaningful and secure way. We believe in building communities that foster positive connections and open communication. At Dvchat, we prioritize user experience, privacy, and innovative features that bring people closer.</p>
+          <p class="leading-relaxed">Our platform provides unique options such as face recognition login, real-time updates, and powerful tools for personal expression. Whether you're here to stay connected with friends or make new ones, Dvchat is designed to give you a safe and enjoyable social experience.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Values Section -->
+    <section class="py-12">
+      <h2 class="text-3xl text-center text-blue-500 font-semibold mb-8">Our Core Values</h2>
+      <div class="flex flex-col md:flex-row justify-between gap-6">
+        <div class="bg-gray-100 p-6 rounded-lg text-center flex-1">
+          <h3 class="text-blue-500 text-xl font-semibold mb-2">Privacy First</h3>
+          <p>Your privacy is our priority. Dvchat is designed with secure authentication, including face recognition, to protect your information and keep your interactions safe.</p>
+        </div>
+        <div class="bg-gray-100 p-6 rounded-lg text-center flex-1">
+          <h3 class="text-blue-500 text-xl font-semibold mb-2">Innovation</h3>
+          <p>We're committed to providing the latest features in social media, from face recognition to personalized feeds, making Dvchat a platform like no other.</p>
+        </div>
+        <div class="bg-gray-100 p-6 rounded-lg text-center flex-1">
+          <h3 class="text-blue-500 text-xl font-semibold mb-2">Community</h3>
+          <p>At Dvchat, we celebrate diversity and inclusivity, creating a space for everyone to share their voice and connect with others.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Meet the Team Section -->
+    <section class="py-12">
+      <h2 class="text-3xl text-center text-blue-500 font-semibold mb-8">Meet Our Team</h2>
+      <div class="flex flex-col md:flex-row justify-center gap-10">
+        <div class="text-center max-w-xs">
+          <img src="{% static 'Dinesh1.jpg' %}" alt="Team Member 1" class="rounded-full w-48 h-48 mx-auto object-cover">
+          <h4 class="text-xl font-semibold mt-4">Dinesh Yadav</h4>
+          <p class="text-gray-600">CEO & Founder</p>
+        </div>
+        <div class="text-center max-w-xs">
+          <img src="path/to/team2.jpg" alt="Team Member 2" class="rounded-full w-48 h-48 mx-auto object-cover">
+          <h4 class="text-xl font-semibold mt-4">Vaibhav Kamble</h4>
+          <p class="text-gray-600">Lead Developer</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center bg-gray-800 text-white py-4">
+    <p>&copy; 2024 Dvchat | All Rights Reserved</p>
+  </footer>
 </body>
 </html>
