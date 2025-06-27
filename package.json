@@ -14,5 +14,8 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.5",
     "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "tailwind-scrollbar-hide": "^4.0.0"
   }
 }
