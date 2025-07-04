@@ -3,9 +3,36 @@ from django.contrib.auth import get_user_model
 import uuid
 from datetime import datetime
 User = get_user_model()
-from django.contrib.auth.models import User
 
 
+class Conversation(models.Model):
+    # Participants in the conversation. Use ManyToManyField for multiple users.
+    # related_name allows reverse lookup from User to Conversation (e.g., user.conversations.all())
+    participants = models.ManyToManyField(User, related_name='conversations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True) # To track latest activity
+
+    class Meta:
+        ordering = ['-updated_at'] # Order conversations by most recent activity
+
+    def __str__(self):
+        # Display participants' usernames for easy identification
+        return ", ".join([user.username for user in self.participants.all()])
+
+
+# Model for an individual message within a conversation
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['timestamp'] # Order messages chronologically
+
+    def __str__(self):
+        return f"From {self.sender.username} in {self.conversation.id}: {self.content[:50]}..."
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -51,3 +78,14 @@ class FollowersCount(models.Model):
     def __str__(self):
         return self.user
     
+class Follower(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_set')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers_set')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Ensures a user can only follow another user once
+        unique_together = ('follower', 'user')
+
+    def __str__(self):
+        return f"{self.follower.username} follows {self.user.username}"

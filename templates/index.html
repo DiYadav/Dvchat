@@ -1,401 +1,186 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" />  
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <title>Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-      defer
-    ></script>
-  </head>
-  <body class="bg-pink-200 font-sans">
-    <!-- Header Section -->
-    <header class="bg-slate-100 shadow sticky top-0 z-50">
-      <div
-        class="max-w-7xl mx-auto flex justify-between items-center px-4 py-3"
-      >
-        <!-- Search Form -->
-        <form
-          action="/search"
-          method="POST"
-          class="flex items-center w-full max-w-xl"
-        >
-          {% csrf_token %}
-          <div class="flex items-center gap-4">
-            <a href="/home" class="text-xl font-bold uppercase text-blue-600"
-              >Dvchat</a
-            >
-            <input
-              type="text"
-              name="username"
-              placeholder="Search for username"
-              class="border rounded px-3 py-1 w-full"
-            />
-            <button
-              type="submit"
-              class="bg-blue-500 text-white px-3 py-1 rounded"
-            >
-              Search
-            </button>
-          </div>
-        </form>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" />  
+    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <title>Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+      defer
+src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer
+    ></script>
+  </head>
+  <body class="bg-black font-sans">
+    <div class="flex">
+        <div class="w-64 bg-black shadow-lg h-screen sticky top-0 py-4 pt-8">
+            <h1 class="text-2xl font-bold text-white mb-6">DVCHAT</h1>
+            <nav class="space-y-4">
+                <a href="/" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7m7-7v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span>Home</span>
+                </a>
+                <a href="/search" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>Search</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4h2a2 2 0 012 2v12a2 2 0 01-2 2h-2m-6 0H6a2 2 0 01-2-2V6a2 2 0 012-2h2m8 0V3a1 1 0 00-1-1H7a1 1 0 00-1 1v1m4 0v10m-4 0h8"></path></svg>
+                    <span>Explore</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Reels</span>
+                </a>
+                <a href="{% url 'message_inbox' %}" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <span>Messages</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17l-3 3m0 0l-3-3m3 3V10m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Notifications</span>
+                </a>
+                <a href="{% url 'create_post' %}" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m0 0h-3m-4 5h12a2 2 0 002-2V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <span>Create</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/profile/{{ user_profile.user }}" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <img src="{{ user_profile.profileimg.url }}" alt="profile" class="w-6 h-6 rounded-full">
+                    <span>Profile</span>
+                </a>
+                <a href="{% url 'logout' %}" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
 
-        <!-- Navbar Dropdowns -->
-        <div class="flex items-center justify-end gap-x-8" x-data="{}">
-          <!-- Upload Pics Dropdown -->
-          <div class="relative" x-data="{ open: false, mode: 'upload' }">
-            <a
-              href="#"
-              class="text-blue-600 font-semibold text-sm"
-              @click.prevent="open = !open"
-              >Upload Pics</a
-            >
-            <div
-              x-show="open"
-              @click.away="open = false"
-              x-transition
-              class="absolute right-0 top-full mt-2 w-[350px] bg-white rounded-md shadow-lg p-4 z-50"
-            >
-              <!-- Upload Form -->
-              <div x-show="mode === 'upload'" x-transition>
-                <form
-                  action="/upload"
-                  method="POST"
-                  enctype="multipart/form-data"
-                >
-                  {% csrf_token %}
-                  <p class="mb-2 text-sm font-medium text-gray-700">
-                    Upload Pics
-                  </p>
-                  <div class="flex flex-col gap-3">
-                    <input
-                      type="file"
-                      name="image_upload"
-                      class="w-full text-sm text-gray-600 border rounded p-1"
-                    />
-                    <textarea
-                      name="caption"
-                      placeholder="Write caption..."
-                      rows="2"
-                      class="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    ></textarea>
-                    <button
-                      type="submit"
-                      class="bg-blue-700 text-white text-sm px-4 py-2 rounded hover:bg-blue-800 transition"
-                    >
-                      Upload
-                    </button>
-                  </div>
-                </form>
-                <a
-                  href="#"
-                  @click.prevent="mode = 'import'"
-                  class="block mt-3 text-xs text-blue-500 hover:underline"
-                  >Or Import Video</a
-                >
-              </div>
+        <div class="flex-1 container mx-auto p-4">
+            <h1 class="text-2xl text-white font-bold mb-4">Feeds</h1>
+            <div class="lg:flex lg:space-x-8">
+                <div class="lg:w-7/12 space-y-6 max-h-[80vh] overflow-y-auto scrollbar-hide pr-2">
+                    {% for post in posts reversed %}
+                    <div class="bg-white rounded-2xl shadow">
+                        <div class="flex items-center justify-between px-4 py-3 border-b">
+                            <div class="flex items-center space-x-3"> 
+                                <a href="/profile/{{ post.user }}">
+                                    <img
+                                        src="{% static 'assets/images/avatars/avatar-2.jpg' %}"
+                                        class="w-10 h-10 rounded-full"
+                                    />
+                                </a>
+                                <span class="font-semibold text-gray-700">@{{ post.user }}</span>
+                            </div>
+                            <a href="#" class="text-gray-400 hover:text-gray-600">...</a>
+                        </div>
 
-              <!-- Import Form -->
-              <div x-show="mode === 'import'" x-transition>
-                <div
-                  class="flex flex-col items-center text-center border border-dashed border-gray-300 rounded-md p-4"
-                >
-                  <svg
-                    class="w-8 h-8 text-gray-500 mb-2"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M2 9.5A3.5 3.5 0 005.5 13H9v2.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 15.586V13h2.5a4.5 4.5 0 10-.616-8.958 4.002 4.002 0 10-7.753 1.977A3.5 3.5 0 002 9.5zm9 3.5H9V8a1 1 0 012 0v5z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                  <p class="text-sm text-gray-600 mb-2">
-                    Import videos from YouTube
-                  </p>
-                  <form
-                    action="#"
-                    method="POST"
-                    class="flex items-center gap-2 w-full"
-                  >
-                    <input
-                      type="text"
-                      name="youtube_link"
-                      placeholder="Paste link"
-                      class="flex-1 p-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                      type="submit"
-                      class="bg-yellow-500 text-white text-sm px-4 py-2 rounded hover:bg-yellow-600"
-                    >
-                      Import
-                    </button>
-                  </form>
+                        {% if post.image %}
+                        <img src="{{ post.image.url }}" class="w-full" alt="Post image" />
+                        {% else %}
+                        <img
+                            src="{% static 'assets/images/posts/default-post.jpg' %}"
+                            class="w-full"
+                            alt="Default image"
+                        />
+                        {% endif %}
+
+                        <div class="px-4 py-3 space-y-2">
+                            <div class="flex items-center space-x-4">
+                                <a
+                                    href="/like-post?post_id={{ post.id }}"
+                                    class="text-blue-500 hover:underline"
+                                >
+                                    ❤️ {% if post.no_of_likes == 0 %}No likes {% elif post.no_of_likes == 1 %}Liked by 1 person {% else %}Liked by {{ post.no_of_likes }} people {% endif %}
+                                </a>
+                                <a href="#" class="text-gray-500">💬</a>
+                                <a
+                                    href="{% if post.image %}{{ post.image.url }}{% endif %}"
+                                    {% if post.image %}download{% endif %}
+                                    class="ml-auto text-gray-500 {% if not post.image %}cursor-not-allowed opacity-50{% endif %}"
+                                >
+                                    ⬇️
+                                </a>
+                            </div>
+                            <div class="text-sm text-gray-700">
+                                <strong>{{ post.user }}</strong> {{ post.caption }}
+                            </div>
+
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-start space-x-3">
+                                    <img
+                                        src="{% static 'assets/images/avatars/avatar-1.jpg' %}"
+                                        class="w-8 h-8 rounded-full"
+                                    />
+                                    <div class="bg-gray-100 p-2 rounded">
+                                        Y’all like Billie Eilish? ❤️ 😜
+                                    </div>
+                                </div>
+                                <div class="flex items-start space-x-3">
+                                    <img
+                                        src="{% static 'assets/images/avatars/avatar-1.jpg' %}"
+                                        class="w-8 h-8 rounded-full"
+                                    />
+                                    <div class="bg-gray-100 p-2 rounded">
+                                        She's my favorite 😋
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Post a comment"
+                                    class="w-full border rounded px-3 py-2"
+                                />
+                                <div class="absolute right-3 top-2">
+                                    <a href="#" class="hover:text-blue-600 font-bold">Post</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                <a
-                  href="#"
-                  @click.prevent="mode = 'upload'"
-                  class="block mt-3 text-xs text-blue-500 hover:underline"
-                  >Or Upload Image</a
-                >
-              </div>
 
-              <div class="pt-3 mt-3 border-t text-xs text-gray-500">
-                Your Image size must be maximum 999MB.
-              </div>
-            </div>
-          </div>
-
-          <!-- Notification Dropdown -->
-          <div class="relative" x-data="{ open: false }">
-            <a
-              href="#"
-              class="text-gray-700 text-sm"
-              @click.prevent="open = !open"
-              >Notification</a
-            >
-            <div
-              x-show="open"
-              @click.away="open = false"
-              x-transition
-              class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg z-50 p-4"
-            >
-              <ul class="text-sm text-gray-700 space-y-2">
-                <li>
-                  <a href="/settings" class="hover:text-blue-600"
-                    >Account Settings</a
-                  >
-                </li>
-                <li>
-                  <a href="/logout" class="text-red-500 hover:text-red-700"
-                    >Log Out</a
-                  >
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Messages Dropdown -->
-          <div class="relative" x-data="{ open: false }">
-            <a
-              href="#"
-              class="text-gray-700 text-sm"
-              @click.prevent="open = !open"
-              >Messages</a
-            >
-            <div
-              x-show="open"
-              @click.away="open = false"
-              x-transition
-              class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg z-50 p-4"
-            >
-              <ul class="text-sm text-gray-700 space-y-2">
-                <li>
-                  <a href="/settings" class="hover:text-blue-600"
-                    >Account Settings</a
-                  >
-                </li>
-                <li>
-                  <a href="/logout" class="text-red-500 hover:text-red-700"
-                    >Log Out</a
-                  >
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Profile Dropdown -->
-          <div class="relative" x-data="{ open: false }">
-            <img
-              src="{{ user_profile.profileimg.url }}"
-              alt="user profile"
-              class="w-9 h-9 rounded-full cursor-pointer border border-gray-300"
-              @click="open = !open"
-            />
-            <div
-              x-show="open"
-              @click.away="open = false"
-              x-transition
-              class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg z-50 p-4"
-            >
-              <ul class="text-sm text-gray-700 space-y-2">
-                <li>
-                  <a href="/settings" class="hover:text-blue-600"
-                    >Account Settings</a
-                  >
-                </li>
-                <li>
-                  <a href="/logout" class="text-red-500 hover:text-red-700"
-                    >Log Out</a
-                  >
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-<!-- Main Content -->
-<div class="container mx-auto p-4">
-  <h1 class="text-2xl font-bold mb-4">Feeds</h1>
-  <div class="lg:flex lg:space-x-8">
-    <!-- Feed Posts -->
-    <div class="lg:w-7/12 space-y-6 max-h-[80vh] overflow-y-auto scrollbar-hide pr-2">
-      {% for post in posts reversed %}
-      <div class="bg-white rounded-2xl shadow">
-        <div class="flex items-center justify-between px-4 py-3 border-b">
-          <div class="flex items-center space-x-3"> 
-            <a href="/profile/{{ post.user }}">
-              <img
-                src="{% static 'assets/images/avatars/avatar-2.jpg' %}"
-                class="w-10 h-10 rounded-full"
-              />
-            </a>
-            <span class="font-semibold text-gray-700">@{{ post.user }}</span>
-          </div>
-          <a href="#" class="text-gray-400 hover:text-gray-600">...</a>
-        </div>
-
-        {% if post.image %}
-        <img src="{{ post.image.url }}" class="w-full" alt="Post image" />
-        {% else %}
-        <img
-          src="{% static 'assets/images/posts/default-post.jpg' %}"
-          class="w-full"
-          alt="Default image"
-        />
-        {% endif %}
-
-        <div class="px-4 py-3 space-y-2">
-          <div class="flex items-center space-x-4">
-            <a
-              href="/like-post?post_id={{ post.id }}"
-              class="text-blue-500 hover:underline"
-            >
-              ❤️ {% if post.no_of_likes == 0 %}No likes {% elif post.no_of_likes == 1 %}Liked by 1 person {% else %}Liked by {{ post.no_of_likes }} people {% endif %}
-            </a>
-            <a href="#" class="text-gray-500">💬</a>
-            <a
-              href="{% if post.image %}{{ post.image.url }}{% endif %}"
-              {% if post.image %}download{% endif %}
-              class="ml-auto text-gray-500 {% if not post.image %}cursor-not-allowed opacity-50{% endif %}"
-            >
-              ⬇️
-            </a>
-          </div>
-          <div class="text-sm text-gray-700">
-            <strong>{{ post.user }}</strong> {{ post.caption }}
-          </div>
-
-          <!-- Example Comments -->
-          <div class="space-y-2 text-sm">
-            <div class="flex items-start space-x-3">
-              <img
-                src="{% static 'assets/images/avatars/avatar-1.jpg' %}"
-                class="w-8 h-8 rounded-full"
-              />
-              <div class="bg-gray-100 p-2 rounded">
-                Y’all like Billie Eilish? ❤️ 😜
-              </div>
-            </div>
-            <div class="flex items-start space-x-3">
-              <img
-                src="{% static 'assets/images/avatars/avatar-1.jpg' %}"
-                class="w-8 h-8 rounded-full"
-              />
-              <div class="bg-gray-100 p-2 rounded">
-                She's my favorite 😋
-              </div>
-            </div>
-          </div>
-
-          <!-- Comment Box -->
-          <div class="relative">
-            <input
-              type="text"
-              placeholder="Post a comment"
-              class="w-full border rounded px-3 py-2"
-            />
-            <div class="absolute right-3 top-2">
-              <a href="#" class="hover:text-blue-600 font-bold">Post</a>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-{% comment %} 
-    <!-- Sidebar: Suggestions -->
-    <div class="lg:w-5/12">
-      <div class="bg-white rounded-xl shadow">
-        <div class="border-b px-6 py-4 flex justify-between items-center">
-          <h2 class="text-lg font-semibold">Users You Can Follow</h2>
-          <a href="{{ id_user }}" class="text-blue-500 text-sm">Refresh</a>
-        </div>
-        <div class="divide-y">
-          {% for suggestion in suggestions_username_profile_list %}
-          <div class="flex items-center justify-between px-6 py-4">
-            <div class="flex items-center space-x-3">
-              <a href="/profile/{{ suggestion.user }}">
-                <img
-                  src="{{ suggestion.profileimg.url }}"
-                  class="w-10 h-10 rounded-full"
-                />
-              </a>
-              <div>
-                <p class="font-semibold">{{ suggestion.user }}</p>
-                <p class="text-sm text-gray-500">{{ suggestion.bio }}</p>
-              </div>
-            </div>
-            <a
-              href="/profile/{{ suggestion.user }}"
-              class="border px-3 py-1 rounded text-sm hover:bg-blue-600 hover:text-white"
-              >View</a
-            >
-          </div>
-          {% endfor %}
-        </div> {% endcomment %}
-
-        <!-- Sidebar: Suggestions -->
-        <div class="lg:w-5/12">
-          <div class="bg-white rounded-xl shadow">
-            <div class="border-b px-6 py-4 flex justify-between items-center">
-              <h2 class="text-lg font-semibold">Users You Can Follow</h2>
-              <a href="{{ id_user }}" class="text-blue-500 text-sm">Refresh</a>
-            </div>
-            <div class="divide-y">
-              {% for suggestion in suggestions_username_profile_list %}
-              <div class="flex items-center justify-between px-6 py-4">
-                <div class="flex items-center space-x-3">
-                  <a href="/profile/{{ suggestion.user }}">
-                    <img
-                      src="{{ suggestion.profileimg.url }}"
-                      class="w-10 h-10 rounded-full"
-                    />
-                  </a>
-                  <div>
-                    <p class="font-semibold">{{ suggestion.user }}</p>
-                    <p class="text-sm text-gray-500">{{ suggestion.bio }}</p>
-                  </div>
+                <div class="lg:w-5/12">
+                    <div class="bg-black rounded-xl shadow">
+                        <div class="border-b px-6 py-4 flex justify-between items-center">
+                            <h2 class="text-white text-lg font-semibold">Users You Can Follow</h2>
+                            <a href="{{ id_user }}" class="text-blue-500 text-sm">Refresh</a>
+                        </div>
+                        <div class="divide-y">
+                            {% for suggestion in suggestions_username_profile_list %}
+                            <div class="flex items-center justify-between px-6 py-4">
+                                <div class="flex text-white items-center space-x-3">
+                                    <a href="/profile/{{ suggestion.user }}">
+                                        <img
+                                            src="{{ suggestion.profileimg.url }}"
+                                            class="w-10 h-10 rounded-full"
+                                        />
+                                    </a>
+                                    <div>
+                                        <p class="font-semibold">{{ suggestion.user }}</p>
+                                        <p class="text-sm text-white">{{ suggestion.bio }}</p>
+                                    </div>
+                                </div>
+                                <a 
+                                  href="/profile/{{ suggestion.user }}"
+                                    class="border px-3 py-1 rounded text-sm text-white hover:bg-blue-600 hover:text-white"
+                                >View</a
+                                >
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
-                <a
-                  href="/profile/{{ suggestion.user }}"
-                  class="border px-3 py-1 rounded text-sm hover:bg-blue-600 hover:text-white"
-                  >View</a
-                >
-              </div>
-              {% endfor %}
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </body>
+</body>
 </html>

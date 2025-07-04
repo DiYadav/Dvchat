@@ -1,0 +1,122 @@
+<html>
+    <head>
+        <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <body class="bg-black">
+        <div class="flex">
+      <div class="w-64 bg-black shadow-lg h-screen sticky top-0 py-4 pt-8 px-4">
+        <h1 class="text-2xl font-bold text-white mb-6">DVCHAT</h1>
+        <nav class="space-y-4">
+          <a href="/" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m0 0l-7 7m7-7v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span>Home</span>
+          </a>
+          <a href="/search" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <span>Search</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 4h2a2 2 0 012 2v12a2 2 0 01-2 2h-2m-6 0H6a2 2 0 01-2-2V6a2 2 0 012-2h2m8 0V3a1 1 0 00-1-1H7a1 1 0 00-1 1v1m4 0v10m-4 0h8"></path></svg>
+            <span>Explore</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Reels</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            <span>Messages</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17l-3 3m0 0l-3-3m3 3V10m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Notifications</span>
+          </a>
+          <a href="/create" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m0 0h-3m-4 5h12a2 2 0 002-2V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+            <span>Create</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="/profile/{{ user_profile.user }}" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <img src="{{ user_profile.profileimg.url }}" alt="profile" class="w-6 h-6 rounded-full">
+            <span>Profile</span>
+          </a>
+          <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <span>More</span>
+          </a>
+        </nav>
+      </div>
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="flex-1 container mx-auto p-4">
+    <div class="bg-gray-900 rounded-xl shadow p-6 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-6">Edit Profile</h2>
+
+        {# Display messages here (success/error/info) #}
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="p-3 rounded-lg text-center
+                        {% if 'success' in message.tags %}bg-green-600 text-white{% endif %}
+                        {% if 'error' in message.tags %}bg-red-600 text-white{% endif %}
+                        {% if 'warning' in message.tags %}bg-yellow-600 text-white{% endif %}
+                        {% if 'info' in message.tags %}bg-blue-600 text-white{% endif %}
+                        ">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="flex items-center space-x-6">
+                <img
+                  src="{{ user_profile.profileimg.url }}"
+                  alt="{{ user_profile.user.username }}'s current profile image"
+                  class="w-24 h-24 rounded-full object-cover border-2 border-gray-600"
+                />
+                <div>
+                    <label for="{{ form.profileimg.id_for_label }}" class="block text-gray-400 text-sm font-bold mb-2">Change Profile Image:</label>
+                    {# Render the file input for profileimg #}
+                    {{ form.profileimg }} 
+                    {% if form.profileimg.errors %}
+                        <p class="text-red-500 text-xs italic mt-1">{{ form.profileimg.errors.as_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.bio.id_for_label }}" class="block text-gray-400 text-sm font-bold mb-2">Bio:</label>
+                {# Render the textarea for bio #}
+                {{ form.bio|add_class:"w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.bio.errors %}
+                    <p class="text-red-500 text-xs italic mt-1">{{ form.bio.errors.as_text }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.location.id_for_label }}" class="block text-gray-400 text-sm font-bold mb-2">Location:</label>
+                {# Render the input for location #}
+                {{ form.location|add_class:"w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.location.errors %}
+                    <p class="text-red-500 text-xs italic mt-1">{{ form.location.errors.as_text }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
+                Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+{% endblock content %}
