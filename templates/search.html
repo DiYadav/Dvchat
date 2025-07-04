@@ -1,205 +1,109 @@
-{% load static%}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <link href="favicon.png" rel="icon" type="image/png">
-  <title>Search</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search | Dvchat</title>
+  <link href="favicon.png" rel="icon" type="image/png" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50 font-sans">
 
-  <form action="search" method="POST" class="relative">
-    {% csrf_token %}
-    <header class="flex items-center justify-between bg-white py-4 px-6 shadow">
-      <!-- Left -->
-      <div class="flex items-center space-x-4">
-        <button type="button"
-          class="block lg:hidden text-2xl"
-          uk-toggle="target: #wrapper; cls: sidebar-active">
-          <i class="uil-bars"></i>
-        </button>
-        <a href="/" class="text-xl font-bold uppercase hidden lg:block">Dvchat</a>
-        <div class="relative">
-          <input name="username" type="text" placeholder="Search for username.." 
-            class="pl-4 pr-10 py-2 border rounded-full focus:outline-none focus:ring" />
-          <button type="submit"
-            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500">
-            <i class="fa fa-search"></i>
+  <!-- Header -->
+  <header class="bg-white shadow sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
+      
+      <!-- Logo & Search -->
+      <div class="flex items-center space-x-6">
+        <a href="/" class="text-2xl font-bold text-indigo-600 hidden sm:block">Dvchat</a>
+        
+        <form action="search" method="POST" class="relative w-full max-w-sm">
+          {% csrf_token %}
+          <input name="username" type="text" placeholder="Search username..." 
+            class="w-full pl-4 pr-12 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" />
+          <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600">
+            <i class="fas fa-search"></i>
           </button>
-        </div>
+        </form>
       </div>
 
-      <!-- Right -->
+      <!-- Actions -->
       <div class="flex items-center space-x-4">
-        <span>Welcome <b>{{ user.username }}</b></span>
-        <a href="#"
-          class="hidden lg:inline-flex items-center bg-pink-500 hover:bg-pink-600 text-white font-semibold px-4 py-2 rounded">
-          <ion-icon name="add-circle" class="mr-1 text-xl"></ion-icon>
-          New Post
+        <span class="text-sm text-gray-700 hidden md:block">Welcome <b>{{ user.username }}</b></span>
+        
+        <a href="#" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm transition hidden md:flex items-center">
+          <i class="fas fa-plus-circle mr-2"></i> New Post
         </a>
 
-        <!-- Upload Dropdown -->
-        <div class="relative">
-          <button type="button" uk-toggle="target: .upload-dropdown; mode: click"
-            class="text-gray-600 hover:text-gray-800">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 22..."/>
-            </svg>
+        <!-- Profile Dropdown -->
+        <div class="relative group">
+          <button type="button">
+            <img src="{{ user_profile.profileimg.url }}" class="w-10 h-10 rounded-full border-2 border-indigo-500" />
           </button>
-          <div class="upload-dropdown hidden absolute right-0 mt-2 w-80 bg-white border rounded shadow-lg p-4 z-10">
-            <h4 class="font-semibold mb-4">Upload Pics or Videos</h4>
-            <div class="space-y-4">
-              <!-- Upload pics block -->
-              <div class="choose-upload flex flex-col items-center p-4 border-2 border-dashed rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="…"/>
-                </svg>
-                <p class="mt-2 text-gray-600">Upload pics …</p>
-                <div uk-form-custom>
-                  <input type="file" />
-                  <a href="#" class="bg-yellow-200 px-3 py-1 rounded">Choose pics</a>
-                </div>
-                <a href="#" class="text-sm text-gray-500 mt-2" uk-toggle="target: .choose-upload; animation: uk-animation-slide-right-small; queued: true">
-                  Or Import Video
-                </a>
-              </div>
-
-              <!-- Import video block -->
-              <div class="choose-upload hidden flex-col items-center p-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="…"/>
-                </svg>
-                <p class="mt-2 text-gray-600 text-center">Import videos from YouTube<br>Paste link here</p>
-                <div uk-grid class="w-full">
-                  <div class="flex-1">
-                    <input type="text" placeholder="Paste link"
-                      class="w-full px-3 py-2 bg-gray-200 rounded focus:outline-none" />
-                  </div>
-                  <div>
-                    <button type="submit" class="bg-yellow-200 px-3 py-2 rounded">Import</button>
-                  </div>
-                </div>
-                <a href="#" class="text-sm text-gray-500 mt-2"
-                  uk-toggle="target: .choose-upload; animation: uk-animation-slide-left-small; queued: true">
-                  Or Upload Video
-                </a>
-              </div>
-            </div>
-            <p class="mt-4 text-xs text-gray-500">Your file size must be maximum 999 MB</p>
-          </div>
-        </div>
-
-        <!-- Notification -->
-        <div class="relative">
-          <button type="button" uk-toggle="mode:click" class="text-gray-600 hover:text-gray-800">
-            <svg class="h-6 w-6"><!-- bell icon --></svg>
-          </button>
-          <div class="hidden absolute right-0 mt-2 w-64 bg-white border rounded shadow-lg z-10">
-            <h4 class="bg-gray-100 p-4 font-semibold">Notification</h4>
-            <ul class="divide-y max-h-48 overflow-auto">
-              <li class="flex items-center p-2">
-                <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" class="w-10 h-10 rounded-full mr-3" />
-                <div>
-                  <p><strong>Taiye</strong> is following you</p>
-                  <span class="text-xs text-gray-500">2 hours ago</span>
-                </div>
-              </li>
-            </ul>
-            <a href="#" class="block p-2 text-center text-blue-500 hover:underline">See all</a>
-          </div>
-        </div>
-
-        <!-- Messages -->
-        <div class="relative">
-          <button type="button" uk-toggle="mode:click" class="text-gray-600 hover:text-gray-800">
-            <svg class="h-6 w-6"><!-- message icon --></svg>
-          </button>
-          <div class="hidden absolute right-0 mt-2 w-64 bg-white border rounded shadow-lg z-10">
-            <h4 class="bg-gray-100 p-4 font-semibold">Messages</h4>
-            <ul class="divide-y max-h-48 overflow-auto">
-              <li class="flex items-center p-2">
-                <img src="{% static 'assets/images/avatars/avatar-1.jpg' %}" class="w-10 h-10 rounded-full mr-3" />
-                <div>
-                  <p><strong>Taiye</strong> <time>6:43 PM</time></p>
-                  <p class="text-gray-600 text-sm">hi tomi</p>
-                </div>
-              </li>
-            </ul>
-            <a href="#" class="block p-2 text-center text-blue-500 hover:underline">See all</a>
-          </div>
-        </div>
-
-        <!-- Profile -->
-        <div class="relative">
-          <button type="button" uk-toggle="mode:click" class="">
-            <img src="{{ user_profile.profileimg.url }}" class="w-8 h-8 rounded-full" />
-          </button>
-          <div class="hidden absolute right-0 mt-2 bg-white border rounded shadow-lg z-10">
-            <ul>
-              <li><a href="/settings" class="block px-4 py-2 hover:bg-gray-100">Account setting</a></li>
-              <li><a href="explore.html" class="block px-4 py-2 hover:bg-gray-100">Explore</a></li>
-              <li><a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Log Out</a></li>
-            </ul>
+          <div class="absolute hidden group-hover:block right-0 mt-2 bg-white shadow-lg rounded w-40 text-sm">
+            <a href="/settings" class="block px-4 py-2 hover:bg-gray-100">Settings</a>
+            <a href="explore.html" class="block px-4 py-2 hover:bg-gray-100">Explore</a>
+            <a href="/logout" class="block px-4 py-2 hover:bg-gray-100 text-red-500">Logout</a>
           </div>
         </div>
       </div>
-    </header>
-  </form>
+    </div>
+  </header>
 
-  <!-- Search Results -->
-  <main class="max-w-4xl mx-auto py-8">
-    <div class="flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 py-10">
+    <div class="lg:flex lg:space-x-6">
+      
       <!-- Sidebar -->
-      <aside class="lg:w-1/4">
-        <h4 class="text-lg font-semibold">Results For <span class="font-bold">{{ username }}</span></h4>
-        <p class="text-gray-600 mt-2 text-sm">Listed content is categorized by the following groups:</p>
-        <ul class="mt-4 space-y-2 text-gray-600">
-          <li><a href="#" class="flex justify-between px-2 py-1 rounded hover:bg-gray-200">Friends <span class="font-medium">34</span></a></li>
-          <li><a href="#" class="flex justify-between px-2 py-1 rounded hover:bg-gray-200">Pages <span class="font-medium">9</span></a></li>
-          <li><a href="#" class="block px-2 py-1 rounded hover:bg-gray-200">Images</a></li>
-          <li><a href="#" class="block px-2 py-1 rounded hover:bg-gray-200">Groups</a></li>
-          <li><a href="#" class="flex justify-between px-2 py-1 rounded hover:bg-gray-200">Globals <span class="font-medium">18</span></a></li>
+      <aside class="mb-8 lg:mb-0 lg:w-1/4">
+        <h2 class="text-lg font-semibold mb-2">Results For <span class="text-indigo-600">{{ username }}</span></h2>
+        <ul class="space-y-2 text-sm text-gray-700">
+          <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Friends <span>34</span></a></li>
+          <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Pages <span>9</span></a></li>
+          <li><a href="#" class="block px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Images</a></li>
+          <li><a href="#" class="block px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Groups</a></li>
+          <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Globals <span>18</span></a></li>
         </ul>
       </aside>
 
-      <!-- Results List -->
-      <section class="flex-1">
-        <p class="text-gray-600 mb-4">About 94 700 000 (0.39 sec.) results</p>
+      <!-- Results -->
+      <section class="flex-1 h-screen overflow-y-auto no-scrollbar">
+        <p class="text-gray-500 mb-4">About 94,700,000 (0.39 sec) results</p>
+
         {% for users in username_profile_list %}
-        <article class="bg-white rounded shadow mb-4 flex overflow-hidden">
-          <a href="/profile/{{ users.user }}" class="w-1/3 lg:w-1/4">
-            <img src="{{ users.profileimg.url }}" alt="" class="object-cover w-full h-full" />
+        <div class="bg-white rounded-lg shadow-sm mb-6 flex flex-col md:flex-row overflow-hidden">
+          <a href="/profile/{{ users.user }}" class="md:w-1/4">
+            <img src="{{ users.profileimg.url }}" alt="{{ users.user }}" class="w-full h-full object-cover" />
           </a>
           <div class="p-4 flex-1">
-            <h4 class="text-xl font-semibold"><a href="/profile/{{ users.user }}">@{{ users.user }}</a></h4>
-            <p class="text-gray-500">{{ users.location }}</p>
-            <p class="mt-2 text-gray-700">{{ users.bio }}</p>
+            <h3 class="text-xl font-semibold"><a href="/profile/{{ users.user }}">@{{ users.user }}</a></h3>
+            <p class="text-sm text-gray-600">{{ users.location }}</p>
+            <p class="mt-2 text-gray-700 text-sm">{{ users.bio }}</p>
           </div>
-          <div class="p-4 flex items-center">
-            <a href="#" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Learn More</a>
+          <div class="p-4 flex items-center justify-center">
+            <a href="/profile/{{ users.user }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">View</a>
           </div>
-        </article>
+        </div>
+        {% empty %}
+        <p class="text-gray-500">No users found.</p>
         {% endfor %}
 
         <!-- Pagination -->
-        <nav class="flex justify-center mt-6">
-          <ul class="inline-flex items-center space-x-2">
-            <li><a href="#" class="px-3 py-2 rounded border bg-white text-gray-500 disabled">Prev</a></li>
-            <li><a href="#" class="px-3 py-2 rounded border bg-blue-100 text-blue-700">1</a></li>
-            <li><a href="#" class="px-3 py-2 rounded border bg-white text-gray-700">2</a></li>
-            <li><a href="#" class="px-3 py-2 rounded border bg-white text-gray-700">3</a></li>
-            <li><a href="#" class="px-3 py-2 rounded border bg-white text-gray-700">...</a></li>
-            <li><a href="#" class="px-3 py-2 rounded border bg-white text-gray-700">Next</a></li>
-          </ul>
-        </nav>
+        <div class="mt-8 flex justify-center space-x-2">
+          <a href="#" class="px-3 py-2 bg-white border rounded hover:bg-gray-100 text-sm">Prev</a>
+          <a href="#" class="px-3 py-2 bg-indigo-100 text-indigo-700 rounded border text-sm">1</a>
+          <a href="#" class="px-3 py-2 bg-white text-gray-700 border rounded text-sm">2</a>
+          <a href="#" class="px-3 py-2 bg-white text-gray-700 border rounded text-sm">3</a>
+          <a href="#" class="px-3 py-2 bg-white border rounded hover:bg-gray-100 text-sm">Next</a>
+        </div>
       </section>
     </div>
   </main>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/js/fontawesome.min.js"></script>
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.16.20/dist/js/uikit.min.js"></script>
   <script src="{% static 'assets/js/uikit.js' %}"></script>
 </body>
 </html>

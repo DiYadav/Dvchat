@@ -1,17 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User, auth
-from django.contrib import messages, auth
+from django.contrib import auth
 from django.contrib.auth.decorators import login_required
 from .models import Profile, Post, LikePost, FollowersCount
 from itertools import chain
 import random
 import face_recognition
 import base64
-from io import BytesIO
-from PIL import Image
-import pickle
 import numpy as np
-import json
 from django.contrib.auth import login as auth_login
 from django.http import JsonResponse
 from django.core.files.base import ContentFile
@@ -84,52 +80,56 @@ def upload(request):
         return redirect('/')
     
 
-
-@login_required(login_url='face_login')
+@login_required(login_url='login')
 def search(request):
-    user_object = User.objects.get(username=request.user.username)
-    user_profile = Profile.objects.get(user=user_object)
+    user = request.user
+    user_profile = Profile.objects.get(user=user)
 
-    if request.method == 'POST':
-        username = request.POST.get('username')
+    if request.method == "POST":
+        username = request.POST['username']
         username_object = User.objects.filter(username__icontains=username)
 
-        username_profile = []
         username_profile_list = []
 
-        for users in username_object:
-            username_profile.append(users.id)
+        for user_obj in username_object:
+            profile = Profile.objects.filter(user=user_obj).first()
+            if profile:
+                username_profile_list.append(profile)
+    else:
+        username_profile_list = []  # Handle GET request fallback
 
-        for ids in username_profile:
-            profile_lists = Profile.objects.filter(id_user=ids)
-            username_profile_list.append(profile_lists)
-        
-        username_profile_list = list(chain(*username_profile_list))
-    return render(request, 'search.html', {'user_profile': user_profile, 'username_profile_list': username_profile_list})
-
+    return render(request, 'search.html', {
+        'user_profile': user_profile,
+        'username_profile_list': username_profile_list
+    })
 
 
 @login_required(login_url='face_login')
 def like_post(request):
-    username = request.user.username
-    post_id = request.GET.get('post_id')
+    if request.method == "GET" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        username = request.user.username
+        post_id = request.GET.get('post_id')
 
-    post = Post.objects.get(id=post_id)
+        post = Post.objects.get(id=post_id)
+        liked = False
 
-    like_filter = LikePost.objects.filter(post_id=post_id, username=username).first()
+        like_filter = LikePost.objects.filter(post_id=post_id, username=username).first()
 
-    if like_filter == None:
-        new_like = LikePost.objects.create(post_id=post_id, username=username)
-        new_like.save()
-        post.no_of_likes = post.no_of_likes+1
+        if like_filter is None:
+            LikePost.objects.create(post_id=post_id, username=username)
+            post.no_of_likes += 1
+            liked = True
+        else:
+            like_filter.delete()
+            post.no_of_likes -= 1
+
         post.save()
-        return redirect('/')
-    else:
-        like_filter.delete()
-        post.no_of_likes = post.no_of_likes-1
-        post.save()
-        return redirect('/')
-
+        return JsonResponse({
+            'likes': post.no_of_likes,
+            'liked': liked
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 
 @login_required(login_url='face_login')
