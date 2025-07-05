@@ -457,9 +457,10 @@ from .models import Profile, Post, LikePost, Follower # Only import 'Follower', 
 # from django.contrib.auth.decorators import login_required # Already imported above
 from .forms import ProfileUpdateForm 
 from .models import Post 
-
-from .models import Profile, Post, LikePost, Follower, Conversation, Message # Add new models
-from .forms import ProfileUpdateForm, MessageForm # Add MessageForm
+from django.db import models 
+from .models import Profile, Post, LikePost, Follower, Conversation, Message # Ensure all are here
+from .forms import ProfileUpdateForm, MessageForm 
+from datetime import datetime, timedelta
 
 
 @login_required(login_url='face_login')
@@ -946,6 +947,53 @@ def about_us(request):
 @login_required(login_url='face_login')
 def account_setting(request):
     return render (request,'account-setting.html')
+
+@login_required(login_url='face_login')
+def dashboard(request):
+    user = request.user
+    user_profile = get_object_or_404(Profile, user=user)
+
+    # 1. User Statistics
+    total_posts = Post.objects.filter(user=user.username).count()
+    
+    # Calculate total likes across all user's posts
+    # Get all post IDs by the user
+    user_post_ids = Post.objects.filter(user=user.username).values_list('id', flat=True)
+    # Count likes on those posts
+    total_likes_on_posts = LikePost.objects.filter(post_id__in=[str(uuid) for uuid in user_post_ids]).count()
+
+    total_followers = Follower.objects.filter(user=user).count()
+    total_following = Follower.objects.filter(follower=user).count()
+
+    # 2. Recent Activity (e.g., new followers)
+    # Get recent followers (e.g., in the last 7 days)
+    seven_days_ago = datetime.now() - timedelta(days=7)
+    recent_followers = Follower.objects.filter(user=user, created_at__gte=seven_days_ago).order_by('-created_at')
+
+    # Get recent messages (e.g., unread messages in user's conversations)
+    unread_messages = Message.objects.filter(
+        conversation__participants=user, # Messages in conversations involving the user
+        is_read=False                   # That are unread
+    ).exclude(sender=user).order_by('-timestamp')[:5] # Exclude messages sent by self, limit to 5
+
+
+    # 3. Most Liked Posts (Top 3)
+    most_liked_posts = Post.objects.filter(user=user.username).order_by('-no_of_likes')[:3]
+
+
+    context = {
+        'user_profile': user_profile,
+        'total_posts': total_posts,
+        'total_likes_on_posts': total_likes_on_posts,
+        'total_followers': total_followers,
+        'total_following': total_following,
+        'recent_followers': recent_followers,
+        'unread_messages': unread_messages,
+        'most_liked_posts': most_liked_posts,
+        # You can add more data here as needed for your dashboard
+    }
+    return render(request, 'dashboard.html', context)
+
 
 
 # This is a custom logout view, not the Django built-in `logout` function directly.

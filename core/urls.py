@@ -7,7 +7,7 @@ urlpatterns = [
     path('create', views.upload, name='create'),
     path('follow', views.follow, name='follow'),
     path('search/', views.search, name='search'),
-    path('profile/<str:username>/', views.profile_view, name='profile'),
+    path('profile/<str:username>/', views.profile_view, name='profile_view'),
     path('like-post', views.like_post, name='like-post'),
     path('register/', views.register, name='register'),
     path('face_login/',views.face_login, name='face_login'),
@@ -19,4 +19,5 @@ urlpatterns = [
     path('messages/', views.message_inbox, name='message_inbox'),
     path('messages/<int:conversation_id>/', views.conversation_detail, name='conversation_detail'),
     path('start_conversation/<int:user_id>/', views.start_conversation, name='start_conversation'),
+    path('dashboard/', views.dashboard, name='dashboard'),
 ]

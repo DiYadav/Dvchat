@@ -1,7 +1,7 @@
 <html>
     <head>
         <script src="https://cdn.tailwindcss.com"></script>
-        <body>
+        <body class="bg-black">
                 <div class="flex">
         <div class="w-64 bg-black shadow-lg h-screen sticky top-0 py-4 pt-8">
             <h1 class="text-2xl font-bold text-white mb-6">DVCHAT</h1>
@@ -34,7 +34,7 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m0 0h-3m-4 5h12a2 2 0 002-2V7a2 2 0 00-2-2H8a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                     <span>Create</span>
                 </a>
-                <a href="#" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
+                <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 text-lg text-white hover:text-blue-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     <span>Dashboard</span>
                 </a>

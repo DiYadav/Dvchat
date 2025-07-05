@@ -1,8 +1,10 @@
-<html>
+ <html>
     <head>
-        <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+    </head>
         <body class="bg-black">
-                <div class="flex">
+ 
+ <div class="flex">
         <div class="w-64 bg-black shadow-lg h-screen sticky top-0 py-4 pt-8">
             <h1 class="text-2xl font-bold text-white mb-6">DVCHAT</h1>
             <nav class="space-y-4">
@@ -49,66 +51,102 @@
             </nav>
         </div>
 {% load static %}
-{% load widget_tweaks %} {# For form styling #}
 
 {% block content %}
-<div class="flex-1 container mx-auto p-4 flex flex-col h-full">
-    <div class="bg-gray-900 rounded-xl shadow p-6 mb-4 text-white flex-grow flex flex-col">
-        <div class="flex items-center mb-4 pb-4 border-b border-gray-700">
-            <a href="{% url 'message_inbox' %}" class="text-blue-400 hover:text-blue-500 mr-4">
-                <i class="fas fa-arrow-left"></i> {# Back arrow icon #}
-            </a>
-            <h2 class="text-2xl font-bold">
-                Conversation with
-                {% if other_participants %}
-                    {% for p in other_participants %}
-                        {{ p.username }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
+<div class="flex-1 container mx-auto p-4">
+    <div class="bg-gray-900 rounded-xl shadow p-6 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-6">Your Dashboard</h2>
+
+        {# Overall Stats Section #}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-gray-800 p-5 rounded-lg text-center">
+                <i class="fas fa-image text-3xl mb-3 text-blue-400"></i>
+                <p class="text-xl font-semibold">Posts</p>
+                <p class="text-3xl font-bold">{{ total_posts }}</p>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-lg text-center">
+                <i class="fas fa-heart text-3xl mb-3 text-red-400"></i>
+                <p class="text-xl font-semibold">Total Likes</p>
+                <p class="text-3xl font-bold">{{ total_likes_on_posts }}</p>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-lg text-center">
+                <i class="fas fa-users text-3xl mb-3 text-green-400"></i>
+                <p class="text-xl font-semibold">Followers</p>
+                <p class="text-3xl font-bold">{{ total_followers }}</p>
+            </div>
+            <div class="bg-gray-800 p-5 rounded-lg text-center">
+                <i class="fas fa-user-friends text-3xl mb-3 text-purple-400"></i>
+                <p class="text-xl font-semibold">Following</p>
+                <p class="text-3xl font-bold">{{ total_following }}</p>
+            </div>
+        </div>
+
+        {# Recent Activity Section #}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-gray-800 p-5 rounded-lg">
+                <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-3">Recent Followers (Last 7 Days)</h3>
+                {% if recent_followers %}
+                    <ul class="space-y-3">
+                        {% for follower_obj in recent_followers %}
+                            <li class="flex items-center text-gray-300">
+                                <i class="fas fa-user-plus mr-3 text-green-300"></i>
+                                <a href="{% url 'profile_view' username=follower_obj.follower.username %}" class="hover:underline">{{ follower_obj.follower.username }}</a> started following you.
+                                <span class="ml-auto text-xs text-gray-500">{{ follower_obj.created_at|date:"M d, H:i" }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
                 {% else %}
-                    (Unknown)
+                    <p class="text-gray-400">No new followers in the last 7 days.</p>
                 {% endif %}
-            </h2>
-        </div>
+            </div>
 
-        {# Display messages here #}
-        <div class="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-4 mb-4">
-            {% for msg in messages %}
-                <div class="flex {% if msg.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
-                    <div class="max-w-md p-3 rounded-lg {% if msg.sender == request.user %}bg-blue-600 text-white{% else %}bg-gray-800 text-white{% endif %}">
-                        <p class="font-semibold text-sm mb-1">
-                            {% if msg.sender != request.user %}
-                                {{ msg.sender.username }}
-                            {% endif %}
-                        </p>
-                        <p>{{ msg.content }}</p>
-                        <p class="text-xs text-gray-400 mt-1 text-right">{{ msg.timestamp|date:"H:i" }}</p>
+            <div class="bg-gray-800 p-5 rounded-lg">
+                <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-3">Unread Messages</h3>
+                {% if unread_messages %}
+                    <ul class="space-y-3">
+                        {% for msg in unread_messages %}
+                            <li class="flex items-center text-gray-300">
+                                <i class="fas fa-envelope text-xl mr-3 text-yellow-300"></i>
+                                <a href="{% url 'conversation_detail' conversation_id=msg.conversation.id %}" class="hover:underline">
+                                    <strong>{{ msg.sender.username }}</strong>: {{ msg.content|truncatechars:40 }}
+                                </a>
+                                <span class="ml-auto text-xs text-gray-500">{{ msg.timestamp|date:"M d, H:i" }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'message_inbox' %}" class="text-blue-400 hover:underline">View all messages</a>
                     </div>
-                </div>
-            {% empty %}
-                <p class="text-gray-400 text-center">No messages in this conversation yet. Send the first one!</p>
-            {% endfor %}
+                {% else %}
+                    <p class="text-gray-400">No unread messages.</p>
+                {% endif %}
+            </div>
         </div>
 
-        {# Message input form #}
-        <div class="mt-auto pt-4 border-t border-gray-700">
-            <form method="post" class="flex items-center space-x-3">
-                {% csrf_token %}
-                {{ form.content|add_class:"flex-grow p-3 rounded-lg bg-gray-800 border border-gray-700 focus:ring-blue-500 focus:border-blue-500 text-white" }}
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline">
-                    Send
-                </button>
-            </form>
+        {# Most Liked Posts Section #}
+        <div class="bg-gray-800 p-5 rounded-lg">
+            <h3 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-3">Your Most Liked Posts</h3>
+            {% if most_liked_posts %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for post in most_liked_posts %}
+                        <div class="bg-gray-900 rounded-lg overflow-hidden shadow">
+                            <a href="{% url 'profile_view' username=post.user %}"> {# Link to profile of the post owner #}
+                                <img src="{{ post.image.url }}" alt="{{ post.caption }}" class="w-full h-48 object-cover">
+                            </a>
+                            <div class="p-4">
+                                <p class="text-lg font-semibold mb-2">{{ post.caption|truncatechars:50 }}</p>
+                                <p class="text-gray-400 text-sm">
+                                    <i class="fas fa-heart text-red-500 mr-1"></i> {{ post.no_of_likes }} likes
+                                </p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-400">You haven't posted anything yet.</p>
+            {% endif %}
         </div>
+
     </div>
 </div>
-
-{# Scroll to bottom of messages automatically using JavaScript #}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var messagesDiv = document.querySelector('.custom-scrollbar');
-        if (messagesDiv) {
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-    });
-</script>
 {% endblock content %}
