@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    'widget_tweaks',
     'chat'
 ]
 
@@ -79,7 +80,7 @@ WSGI_APPLICATION = 'social_book.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-         'NAME': 'faceai',
+        'NAME': 'faceai',
         'USER': 'root',
         'PASSWORD': 'root',
         'HOST': 'localhost',

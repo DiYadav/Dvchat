@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <body class="bg-black">
+        <div class="flex">
+      < {% include 'navbar.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block content %}
+<div class="flex-1 container mx-auto p-4">
+    <div class="bg-gray-900 rounded-xl shadow p-6 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-6">Edit Profile</h2>
+
+        {# Display messages here (success/error/info) #}
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="p-3 rounded-lg text-center
+                        {% if 'success' in message.tags %}bg-green-600 text-white{% endif %}
+                        {% if 'error' in message.tags %}bg-red-600 text-white{% endif %}
+                        {% if 'warning' in message.tags %}bg-yellow-600 text-white{% endif %}
+                        {% if 'info' in message.tags %}bg-blue-600 text-white{% endif %}
+                        ">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="flex items-center space-x-6">
+                <img
+                  src="{{ user_profile.profileimg.url }}"
+                  alt="{{ user_profile.user.username }}'s current profile image"
+                  class="w-24 h-24 rounded-full object-cover border-2 border-gray-600"
+                />
+                <div>
+                    <label for="{{ form.profileimg.id_for_label }}" class="block text-gray-400 text-sm font-bold mb-2">Change Profile Image:</label>
+                    {# Render the file input for profileimg #}
+                    {{ form.profileimg }} 
+                    {% if form.profileimg.errors %}
+                        <p class="text-red-500 text-xs italic mt-1">{{ form.profileimg.errors.as_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.bio.id_for_label }}" class="block text-gray-400 text-sm font-bold mb-2">Bio:</label>
+                {# Render the textarea for bio #}
+                {{ form.bio|add_class:"w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.bio.errors %}
+                    <p class="text-red-500 text-xs italic mt-1">{{ form.bio.errors.as_text }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.location.id_for_label }}" class="block text-gray-400 text-sm font-bold mb-2">Location:</label>
+                {# Render the input for location #}
+                {{ form.location|add_class:"w-full p-3 rounded-lg bg-gray-800 border border-gray-700 focus:ring-blue-500 focus:border-blue-500" }}
+                {% if form.location.errors %}
+                    <p class="text-red-500 text-xs italic mt-1">{{ form.location.errors.as_text }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
+                Save Changes
+            </button>
+        </form>
+    </div>
+</div>
+</body>
+</html>
+{% endblock content %}

@@ -1,0 +1,58 @@
+<html>
+    <head>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <body class="bg-black">
+                <div class="flex">
+         {% include 'navbar.html' %}
+{% load static %}
+
+{% block content %}
+<div class="flex-1 container mx-auto p-4">
+    <div class="bg-gray-900 rounded-xl shadow p-6 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-6">Messages</h2>
+
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="p-3 rounded-lg text-center
+                        {% if 'success' in message.tags %}bg-green-600 text-white{% endif %}
+                        {% if 'error' in message.tags %}bg-red-600 text-white{% endif %}
+                        ">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if conversations_data %} {# Iterate over the new data structure #}
+            <div class="space-y-4">
+                {% for item in conversations_data %}
+                    <a href="{% url 'conversation_detail' conversation_id=item.conversation.id %}" class="block bg-gray-800 hover:bg-gray-700 p-4 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold">
+                                {% if item.other_participants %}
+                                    {% for p in item.other_participants %}
+                                        {{ p.username }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    (Self Chat or Group Chat) {# Adjust this based on your chat type #}
+                                {% endif %}
+                            </h3>
+                            {% if item.last_message %}
+                                <p class="text-gray-400 text-sm mt-1">
+                                    {{ item.last_message.sender.username }}: {{ item.last_message.content|truncatechars:50 }}
+                                </p>
+                            {% else %}
+                                <p class="text-gray-500 text-sm mt-1">No messages yet.</p>
+                            {% endif %}
+                        </div>
+                        <span class="text-gray-500 text-sm">{{ item.conversation.updated_at|date:"M d, H:i" }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-400">You don't have any conversations yet. Start one from a user's profile!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

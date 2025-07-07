@@ -3,152 +3,115 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Login with Face & Username</title>
-    <link href="{% static 'css/style.css' %}" rel="stylesheet" />
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <meta name="csrf-token" content="{{ csrf_token }}" />
   </head>
-  <body
-    class="h-screen m-0 p-0 box-border font-[Segoe_UI] flex justify-center items-center animate-gradient bg-[length:400%_400%] bg-[linear-gradient(-45deg,#ee7752,#e73c7e,#23a6d5,#23d5ab)]"
-  >
-    <a class="absolute top-6 left-6" href="/about">
-      <button
-        class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-white hover:text-gray-800 transition-all duration-300 transform hover:scale-105"
-      >
-        About Us
-      </button>
-    </a>
+  <body class="bg-black h-screen flex items-center justify-center font-sans">
 
-    <div
-      class="bg-white/15 backdrop-blur p-10 rounded-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] border border-white/20 w-[500px] text-center animate-fadeIn"
-    >
-      <h2 class="text-white text-2xl font-semibold mb-6">
-        Login with Username and Face
-      </h2>
+    <!-- Container -->
+    <div class="flex bg-black text-white rounded-lg shadow-lg max-w-5xl w-full p-4">
 
-      <input
-        type="text"
-        id="username"
-        placeholder="Enter Username"
-        class="w-full p-3 mb-4 rounded-xl border-none outline-none text-base"
-        required
-      />
-
-      <video
-        id="video"
-        autoplay
-        muted
-        class="w-full rounded-xl mb-4 border-2 border-white shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-      ></video>
-
-      <div class="flex justify-center gap-4">
-        <button
-          id="capture-button"
-          class="px-5 py-2 text-base rounded-xl bg-white text-gray-800 hover:bg-gray-800 hover:text-white transition-all duration-300 transform hover:scale-105"
-        >
-          Login
-        </button>
-
-        <a href="/register/">
-          <button
-            type="button"
-            class="px-5 py-2 text-base rounded-xl bg-white text-gray-800 hover:bg-gray-800 hover:text-white transition-all duration-300 transform hover:scale-105"
-          >
-            Register
-          </button>
-        </a>
+      <!-- Left Side Image Mock -->
+      <div class="bg-slate-500 hidden lg:block w-1/2 ">
+        <img src="{% static 'images/world.png' %}" alt="AppImage" class="w-full top-10" />
       </div>
 
-      <canvas id="canvas" class="hidden"></canvas>
+      <!-- Right Side Form -->
+      <div class="w-full lg:w-1/2 flex flex-col justify-center px-6 py-8 space-y-6">
 
-      <div id="loginMessage" class="mt-4 text-sm text-white min-h-[20px]"></div>
+        <h1 class="text-4xl font-bold text-center mb-4">DVCHAT</h1>
+
+        <!-- Username Input -->
+        <input
+          id="username"
+          type="text"
+          placeholder="Username"
+          class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
+        />
+
+        <!-- Password Input -->
+        <input
+          id="password"
+          type="password"
+          placeholder="Password"
+          class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
+        />
+
+        <!-- Buttons -->
+        <button
+          onclick="handlePasswordLogin()"
+          class="bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+        >Login</button>
+
+        <div class="flex items-center justify-center text-sm text-gray-400">OR</div>
+
+        <!-- Face login video -->
+        <video id="video" autoplay muted class="w-full h-48 object-cover rounded border-2 border-gray-600"></video>
+        <button
+          id="capture-button"
+          class="bg-white text-black py-2 rounded hover:bg-gray-200 transition"
+        >Login with Face</button>
+
+        <div id="loginMessage" class="text-sm text-center text-red-400 min-h-[1rem]"></div>
+
+        <div class="text-sm text-center">
+          Don’t have an account? <a href="{% url 'register' %}" class="text-blue-400 hover:underline">Sign up</a>
+        </div>
+      </div>
     </div>
 
+    <!-- Scripts -->
     <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        const video = document.getElementById("video");
-        const canvas = document.getElementById("canvas");
-        const context = canvas.getContext("2d");
-        const captureBtn = document.getElementById("capture-button");
-        const loginMessage = document.getElementById("loginMessage");
+      const video = document.getElementById("video");
+      const captureBtn = document.getElementById("capture-button");
+      const canvas = document.createElement("canvas");
 
-        const getCSRFToken = () => {
-          return document
-            .querySelector('meta[name="csrf-token"]')
-            .getAttribute("content");
-        };
+      const getCSRFToken = () => document.querySelector('meta[name="csrf-token"]').content;
 
-        navigator.mediaDevices
-          .getUserMedia({ video: true })
-          .then((stream) => {
-            video.srcObject = stream;
-          })
-          .catch(() => {
-            loginMessage.innerText = "Camera access denied.";
-          });
-
-        captureBtn.onclick = async () => {
-          const username = document.getElementById("username").value.trim();
-
-          if (!username) {
-            loginMessage.innerText = "Please enter your username.";
-            return;
-          }
-
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const imageData = canvas.toDataURL("image/jpeg");
-
-          const formData = new FormData();
-          formData.append("username", username);
-          formData.append("face_image", imageData);
-
-          const response = await fetch("{% url 'face_login' %}", {
-            method: "POST",
-            headers: {
-              "X-CSRFToken": getCSRFToken(),
-            },
-            body: formData,
-          });
-
-          const result = await response.json();
-          loginMessage.innerText = result.message;
-
-          if (result.status === "success") {
-            window.location.href = "/";
-          }
-        };
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        video.srcObject = stream;
       });
-    </script>
 
-    <style>
-      @keyframes gradientBG {
-        0% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-        100% {
-          background-position: 0% 50%;
-        }
+      captureBtn.onclick = async () => {
+        const username = document.getElementById("username").value.trim();
+        if (!username) return document.getElementById("loginMessage").innerText = "Enter username first.";
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL("image/jpeg");
+
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("face_image", imageData);
+
+        const response = await fetch("{% url 'face_login' %}", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCSRFToken() },
+          body: formData,
+        });
+
+        const result = await response.json();
+        document.getElementById("loginMessage").innerText = result.message;
+        if (result.status === "success") window.location.href = "/";
+      };
+
+      async function handlePasswordLogin() {
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const response = await fetch("{% url 'password_login' %}", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
+        const result = await response.json();
+        document.getElementById("loginMessage").innerText = result.message;
+        if (result.status === "success") window.location.href = "/";
       }
-      .animate-gradient {
-        animation: gradientBG 5s ease infinite;
-      }
-      @keyframes fadeIn {
-        from {
-          transform: scale(0.9);
-          opacity: 0;
-        }
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
-      }
-      .animate-fadeIn {
-        animation: fadeIn 1.2s ease-in-out;
-      }
-    </style>
+    </script>
   </body>
 </html>

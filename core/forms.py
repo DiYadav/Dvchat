@@ -1,7 +1,18 @@
 # from django import forms
 # from django.contrib.auth.models import User
 # from .models import *
+# core/forms.py
+from django import forms
+from .models import Profile , Message # Make sure Profile is imported
 
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['bio', 'location', 'profileimg']
+
+class MessageForm(forms.Form):
+    content = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), label='') # No label for cleaner UI
+    # We won't include recipient here, as it will be handled by the view based on the conversation context
 
 # # class UserRegistrationForm(forms.ModelForm):
 # #     password = forms.CharField(widget=forms.PasswordInput)

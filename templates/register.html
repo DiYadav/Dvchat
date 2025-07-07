@@ -1,4 +1,4 @@
-{% load static %}
+{% comment %} {% load static %}
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -167,5 +167,134 @@
         animation: fadeIn 1.2s ease-in-out;
       }
     </style>
+  </body>
+</html> {% endcomment %}
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Register</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token }}" />
+  </head>
+  <body class="bg-black h-screen flex items-center justify-center font-sans">
+
+    <!-- Container -->
+    <div class="flex bg-black text-white rounded-lg shadow-lg max-w-5xl w-full p-4">
+
+      <!-- Left Image Area -->
+      <div class="hidden lg:block w-1/2">
+        <img src="{% static 'images/insta_mock.jpg' %}" alt="Mock" class="w-full h-full object-cover rounded-lg" />
+      </div>
+
+      <!-- Right Form Area -->
+      <div class="w-full lg:w-1/2 flex flex-col justify-center px-6 py-8 space-y-6">
+        <h1 class="text-4xl font-bold text-center mb-4">DVCHAT</h1>
+
+        <!-- Username Input -->
+        <input
+          id="username"
+          name="username"
+          type="text"
+          placeholder="Enter Username"
+          class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
+          required
+        />
+
+        <!-- Webcam Preview -->
+        <video
+          id="video"
+          autoplay
+          class="w-full h-48 object-cover rounded border-2 border-gray-600"
+        ></video>
+
+        <!-- Hidden Canvas -->
+        <canvas id="canvas" class="hidden"></canvas>
+
+        <!-- Buttons -->
+        <div class="flex justify-center gap-4">
+          <button
+            type="button"
+            id="capture-button"
+            class="px-5 py-2 text-base rounded bg-white text-black hover:bg-gray-200 transition"
+          >
+            Capture Face
+          </button>
+          <button
+            type="button"
+            id="register-button"
+            class="px-5 py-2 text-base rounded bg-blue-500 text-white hover:bg-blue-600 transition"
+          >
+            Register
+          </button>
+        </div>
+
+        <div id="messageDiv" class="text-sm text-center text-red-400 min-h-[1rem]"></div>
+
+        <div class="text-sm text-center">
+          Already have an account?
+          <a href="{% url 'face_login' %}" class="text-blue-400 hover:underline">Login</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const captureButton = document.getElementById("capture-button");
+      const registerButton = document.getElementById("register-button");
+      const usernameInput = document.getElementById("username");
+      const messageDiv = document.getElementById("messageDiv");
+      let capturedImage = null;
+
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        video.srcObject = stream;
+      }).catch(() => {
+        messageDiv.innerText = "Camera not accessible.";
+      });
+
+      captureButton.onclick = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        capturedImage = canvas.toDataURL("image/jpeg");
+        messageDiv.innerText = "Face captured successfully!";
+      };
+
+      registerButton.onclick = async () => {
+        const username = usernameInput.value.trim();
+        if (!username) {
+          messageDiv.innerText = "Please enter a username.";
+          return;
+        }
+        if (!capturedImage) {
+          messageDiv.innerText = "Please capture your face first.";
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("username", username);
+        formData.append("face_image", capturedImage);
+
+        const response = await fetch("{% url 'register' %}", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+
+        const result = await response.json();
+        messageDiv.innerText = result.message || "Registration failed";
+        if (result.status === "success") {
+          setTimeout(() => window.location.href = "{% url 'face_login' %}", 1500);
+        }
+      };
+    </script>
   </body>
 </html>
