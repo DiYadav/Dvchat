@@ -1,4 +1,3 @@
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -65,7 +64,7 @@
                 <div class="flex items-center space-x-3">
                   <a href="/profile/{{ post.user }}">
                     <img
-                      src="{{ post.profile_image_url }}" {# Assuming post object has profile_image_url #}
+                      src="{{ profile_user.profileimg.url}}" {# Assuming post object has profile_image_url #}
                       class="w-10 h-10 rounded-full"
                       alt="Profile of {{ post.user }}"
                     />
@@ -91,7 +90,7 @@
                     href="/like-post?post_id={{ post.id }}"
                     class="text-blue-500 hover:underline"
                   >
-                    ❤️ {% if post.no_of_likes == 0 %}No likes {% elif post.no_of_likes == 1 %}Liked by 1 person {% else %}Liked by {{ post.no_of_likes }} people {% endif %}
+                  ❤️ {% if post.no_of_likes == 0 %}No likes {% elif post.no_of_likes == 1 %}Liked by 1 person {% else %}Liked by {{ post.no_of_likes }} people {% endif %}
                   </a>
                   <a href="#" class="text-gray-500">💬</a>
                   <a

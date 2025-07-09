@@ -5,7 +5,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('settings', views.settings, name='settings'),
     path('create', views.upload, name='create'),
-    path('follow', views.follow, name='follow'),
+    path('follow/', views.follow, name='follow'),
     path('search/', views.search, name='search'),
     path('profile/<str:username>/', views.profile_view, name='profile_view'),
     path('like-post', views.like_post, name='like-post'),
@@ -22,4 +22,6 @@ urlpatterns = [
     path('start_conversation/<int:user_id>/', views.start_conversation, name='start_conversation'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('notifications/', views.notifications, name='notifications'),
+    path('add-comment/<uuid:post_id>/',views.add_comment, name='add_comment'),
+    path('like-post/', views.like_post, name='like_post'),
 ]

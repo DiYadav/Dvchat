@@ -1,33 +1,22 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.models import User # Use this for Django's default User model
+from django.contrib.auth.models import User 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login, logout as auth_logout# Alias Django's logout to avoid name clash with your function
 from itertools import chain
 import random
-
-# For face recognition features
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 import face_recognition
 import base64
-from io import BytesIO
-from PIL import Image
-import pickle
 import numpy as np
-import json
 from django.http import JsonResponse
 from django.core.files.base import ContentFile
 import cv2
-
-# Import your models (ensure FollowersCount is NOT imported if you remove it from models.py)
-from .models import Profile, Post, LikePost, Follower,Notification # Only import 'Follower', not 'FollowersCount'
-
-# You had this duplicate import from previous suggestion, remove it:
-# from django.db.models import Count
-# from django.contrib.auth.decorators import login_required # Already imported above
+from .models import * # Only import 'Follower', not 'FollowersCount'
 from .forms import ProfileUpdateForm 
 from .models import Post 
 from django.db import models 
-from .models import Profile, Post, LikePost, Follower, Conversation, Message# Ensure all are here
 from .forms import ProfileUpdateForm, MessageForm 
 from datetime import datetime, timedelta
 
@@ -44,12 +33,6 @@ def message_inbox(request):
         all_participants = conv.participants.all()
         # Filter out the current user to find the other participants
         other_participants = [p for p in all_participants if p != request.user]
-        
-        # If it's a 2-person chat, 'other_participants' will have one user
-        # If it's a group chat, it will have multiple.
-        # Handle cases where it's a self-chat (other_participants might be empty)
-        
-        # Append a dictionary or tuple with the conversation object and the list of other participants
         conversations_with_others.append({
             'conversation': conv,
             'other_participants': other_participants,
@@ -81,9 +64,7 @@ def conversation_detail(request, conversation_id):
                 sender=request.user,
                 content=content
             )
-            # Mark messages sent by the OTHER participant as read if they are viewing the conversation
-            # This logic can be more complex based on your needs (e.g., only when scrolled to bottom)
-            # For simplicity, we'll mark all unread messages from the other participant as read.
+        
             conversation.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
             return redirect('conversation_detail', conversation_id=conversation.id)
     else:
@@ -114,9 +95,6 @@ def start_conversation(request, user_id):
     if recipient == request.user:
         messages.warning(request, "You cannot start a conversation with yourself.")
         return redirect('profile_view', username=request.user.username)
-
-    # Try to find an existing conversation between these two users
-    # This is simplified for a 2-person chat. For group chats, it's more complex.
     existing_conversations = Conversation.objects.filter(participants=request.user).filter(participants=recipient).annotate(num_participants=models.Count('participants')).filter(num_participants=2)
 
     if existing_conversations.exists():
@@ -174,64 +152,107 @@ def edit_profile_view(request):
     return render(request, 'edit_profile.html', {'user_profile': user_profile, 'form': form})
 
 @login_required(login_url='face_login')
+# def index(request):
+#     user_object = get_object_or_404(User, username=request.user.username)
+#     user_profile = get_object_or_404(Profile, user=user_object)
+
+#     user_following_list = []
+#     feed = []
+
+#     user_following = Follower.objects.filter(follower=request.user)
+
+#     for users_follower_obj in user_following:
+#         user_following_list.append(users_follower_obj.user.username)
+
+#     # Add the current user's own username to the list
+#     user_following_list.append(request.user.username)
+
+#     for username_in_list in user_following_list:
+#         feed_lists = Post.objects.filter(user=username_in_list).order_by('-created_at')
+#         feed.append(feed_lists)
+
+#     feed_list = list(chain(*feed))
+#     feed_list.sort(key=lambda x: x.created_at, reverse=True) # Ensure consistent ordering
+
+
+#     # --- Start of User Suggestion Logic ---
+#     all_users = User.objects.all()
+#     user_following_all = []
+
+#     for users_follower_obj in user_following:
+#         user_following_all.append(users_follower_obj.user)
+    
+#     new_suggestions_list = [x for x in list(all_users) if (x not in list(user_following_all))]
+#     current_user = User.objects.filter(username=request.user.username)
+#     final_suggestions_list = [x for x in list(new_suggestions_list) if (x not in list(current_user))]
+#     random.shuffle(final_suggestions_list)
+
+#     username_profile = []
+#     username_profile_list = []
+
+#     # Initialize suggestions_username_profile_list here, before potential loops
+#     suggestions_username_profile_list = []
+
+#     # Only run these loops if there are actual suggestions
+#     if final_suggestions_list: # Check if there are any users to suggest
+#         for user_in_suggestions in final_suggestions_list: # Renamed 'users' for clarity
+#             username_profile.append(user_in_suggestions.id)
+
+#         for ids_in_profile in username_profile: # Renamed 'ids' for clarity
+#             profile_lists = Profile.objects.filter(id_user=ids_in_profile)
+#             username_profile_list.append(profile_lists)
+
+#         suggestions_username_profile_list = list(chain(*username_profile_list))
+#     # --- End of User Suggestion Logic ---
+
+
+#     return render(request, 'index.html', {
+#         'user_profile': user_profile,
+#         'posts': feed_list,
+#         'suggestions_username_profile_list': suggestions_username_profile_list[:5]
+#     })
+
+
+@login_required(login_url='face_login')
 def index(request):
     user_object = get_object_or_404(User, username=request.user.username)
     user_profile = get_object_or_404(Profile, user=user_object)
 
-    user_following_list = []
-    feed = []
-
+    # --- Feed Logic ---
     user_following = Follower.objects.filter(follower=request.user)
+    user_following_list = [f.user.username for f in user_following]
+    user_following_list.append(request.user.username)  # include own posts
 
-    for users_follower_obj in user_following:
-        user_following_list.append(users_follower_obj.user.username)
+    # Fetch posts from followed users + self
+    feed = Post.objects.filter(user__in=user_following_list).order_by('-created_at')
+    feed_list = list(feed)
 
-    # Add the current user's own username to the list
-    user_following_list.append(request.user.username)
+    # ✅ Add `is_liked` attribute to each post for heart coloring
+    for post in feed_list:
+        post.is_liked = post.likes.filter(id=request.user.id).exists()
 
-    for username_in_list in user_following_list:
-        feed_lists = Post.objects.filter(user=username_in_list).order_by('-created_at')
-        feed.append(feed_lists)
-
-    feed_list = list(chain(*feed))
-    feed_list.sort(key=lambda x: x.created_at, reverse=True) # Ensure consistent ordering
-
-
-    # --- Start of User Suggestion Logic ---
+    # --- Suggestion Logic ---
     all_users = User.objects.all()
-    user_following_all = []
+    user_following_users = [f.user for f in user_following]
 
-    for users_follower_obj in user_following:
-        user_following_all.append(users_follower_obj.user)
-    
-    new_suggestions_list = [x for x in list(all_users) if (x not in list(user_following_all))]
-    current_user = User.objects.filter(username=request.user.username)
-    final_suggestions_list = [x for x in list(new_suggestions_list) if (x not in list(current_user))]
-    random.shuffle(final_suggestions_list)
+    # Users not followed and not self
+    final_suggestions = [
+        user for user in all_users
+        if user not in user_following_users and user != request.user
+    ]
+    random.shuffle(final_suggestions)
 
-    username_profile = []
-    username_profile_list = []
-
-    # Initialize suggestions_username_profile_list here, before potential loops
     suggestions_username_profile_list = []
+    for user_obj in final_suggestions:
+        profile = Profile.objects.filter(user=user_obj).first()
+        if profile:
+            suggestions_username_profile_list.append(profile)
 
-    # Only run these loops if there are actual suggestions
-    if final_suggestions_list: # Check if there are any users to suggest
-        for user_in_suggestions in final_suggestions_list: # Renamed 'users' for clarity
-            username_profile.append(user_in_suggestions.id)
-
-        for ids_in_profile in username_profile: # Renamed 'ids' for clarity
-            profile_lists = Profile.objects.filter(id_user=ids_in_profile)
-            username_profile_list.append(profile_lists)
-
-        suggestions_username_profile_list = list(chain(*username_profile_list))
-    # --- End of User Suggestion Logic ---
-
-
+    # --- Render the template ---
     return render(request, 'index.html', {
         'user_profile': user_profile,
         'posts': feed_list,
-        'suggestions_username_profile_list': suggestions_username_profile_list[:4]
+        'suggestions_username_profile_list': suggestions_username_profile_list[:5],
     })
 
 
@@ -294,6 +315,7 @@ def like_post(request):
         post.save()
     
     return redirect(request.META.get('HTTP_REFERER', '/')) # Redirect back to previous page
+
 
 @login_required # Ensures only logged-in users can access profile pages
 def profile_view(request, username):
@@ -374,8 +396,6 @@ def follow(request):
             )
             messages.success(request, f"You are now following {user_to_follow_username}.")
 
-        # This is the critical redirection.
-        # Ensure 'profile_view' is the correct URL name and 'username' is the correct argument.
         return redirect('profile_view', username=user_to_follow_username)
     return redirect('index')
 
@@ -392,7 +412,6 @@ def settings(request):
 
         if image: # Check if a new image was uploaded
             user_profile.profileimg = image
-        # Don't set image = user_profile.profileimg if image is None, just leave it unchanged if no new upload
         
         user_profile.bio = bio
         user_profile.location = location
@@ -500,21 +519,10 @@ def face_login(request):
 
     return render(request, 'login.html')
 
-# Duplicate definition, remove one
-# @login_required
-# def home_view(request):
-#     return render(request, 'home.html', {'username': request.user.username})
-
 @login_required
 def home_view(request): # Keep this one
     return render(request, 'home.html', {'username': request.user.username})
 
-
-# Duplicate definition, remove one
-# @login_required
-# def logout_view(request):
-#     logout(request)
-#     return redirect('face_login')
 
 @login_required
 def logout_view(request): # Keep this one, and use auth_logout
@@ -558,10 +566,8 @@ def dashboard(request):
         is_read=False                   # That are unread
     ).exclude(sender=user).order_by('-timestamp')[:5] # Exclude messages sent by self, limit to 5
 
-
     # 3. Most Liked Posts (Top 3)
     most_liked_posts = Post.objects.filter(user=user.username).order_by('-no_of_likes')[:3]
-
 
     context = {
         'user_profile': user_profile,
@@ -577,21 +583,6 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
-
-# This is a custom logout view, not the Django built-in logout function directly.
-# It's better to use the aliased auth_logout from Django's auth module.
-# If you keep this function, rename it to something like custom_logout_page
-# to avoid confusion with the actual auth.logout function.
-# For simplicity, I've integrated its logic into logout_view above.
-# If you have it hooked to a URL, you might need to adjust.
-# @login_required
-# def logout(request):
-#     auth.logout(request)
-#     return redirect('face_login')
-
-
-from django.shortcuts import render
-
 def password_login(request):
     return render(request, 'password_login.html')
 
@@ -601,18 +592,6 @@ def password_login(request):
 def notifications(request):
 
     user_notifications = Notification.objects.filter(recipient=request.user).order_by('-created_at')
-
-    
-
-    # Optional: Mark all viewed notifications as read
-
-    # This is a common UX, but consider user preference (e.g., a separate 'Mark all as read' button)
-
-    # user_notifications.update(is_read=True)
-
-
-
-    # To implement marking individual notifications as read
 
     if request.method == 'POST' and 'mark_read' in request.POST:
 
@@ -645,3 +624,31 @@ def notifications(request):
     }
 
     return render(request, 'notifications.html', context)
+
+
+@login_required
+def add_comment(request, post_id):
+    if request.method == 'POST':
+        post = get_object_or_404(Post, id=post_id)
+        comment_text = request.POST.get('comment_text')
+        if comment_text:
+            Comment.objects.create(post=post, user=request.user, text=comment_text)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('index')))
+
+
+@login_required
+def like_post(request):
+    post_id = request.GET.get('post_id')
+    post = get_object_or_404(Post, id=post_id)
+
+    if request.user in post.likes.all():
+        # User already liked → unlike
+        post.likes.remove(request.user)
+        post.no_of_likes -= 1
+    else:
+        # User is liking the post
+        post.likes.add(request.user)
+        post.no_of_likes += 1
+
+    post.save()
+    return redirect(request.META.get('HTTP_REFERER', '/'))

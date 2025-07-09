@@ -6,8 +6,6 @@ User = get_user_model()
 
 
 class Conversation(models.Model):
-    # Participants in the conversation. Use ManyToManyField for multiple users.
-    # related_name allows reverse lookup from User to Conversation (e.g., user.conversations.all())
     participants = models.ManyToManyField(User, related_name='conversations')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True) # To track latest activity
@@ -34,6 +32,8 @@ class Message(models.Model):
     def __str__(self):
         return f"From {self.sender.username} in {self.conversation.id}: {self.content[:50]}..."
 
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     id_user = models.IntegerField()
@@ -52,16 +52,33 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
+
+from django.db import models
+from django.contrib.auth.models import User
+import uuid
+from datetime import datetime
+
 class Post(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Stores the username as string (you can change to ForeignKey for more power)
     user = models.CharField(max_length=100)
+    
     image = models.ImageField(upload_to='post_images')
     caption = models.TextField()
     created_at = models.DateTimeField(default=datetime.now)
+    
+    # Like system
     no_of_likes = models.IntegerField(default=0)
 
+    # ✅ This tracks which users liked the post
+    likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
+
     def __str__(self):
-        return self.user
+        return f"{self.user} - {self.caption[:30]}"
+
+
+
 
 class LikePost(models.Model):
     post_id = models.CharField(max_length=500)
@@ -70,6 +87,8 @@ class LikePost(models.Model):
     def __str__(self):
         return self.username
 
+
+
 class FollowersCount(models.Model):
     follower = models.CharField(max_length=100)
     user = models.CharField(max_length=100)
@@ -77,6 +96,8 @@ class FollowersCount(models.Model):
     def __str__(self):
         return self.user
     
+
+
 class Follower(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_set')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers_set')
@@ -88,6 +109,8 @@ class Follower(models.Model):
 
     def __str__(self):
         return f"{self.follower.username} follows {self.user.username}"
+
+
 
 class Notification(models.Model):
     # The user who receives the notification
@@ -103,13 +126,6 @@ class Notification(models.Model):
     # Content/message of the notification
     message = models.TextField(blank=True, null=True)
 
-    # Optional: Link to the related object (e.g., the Post, the Conversation)
-    # Using GenericForeignKey for flexibility, or specific ForeignKeys if simpler
-    # For now, we'll keep it simple, but this is a common extension.
-    # object_id = models.UUIDField(blank=True, null=True)
-    # content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, blank=True, null=True)
-    # content_object = GenericForeignKey('content_type', 'object_id')
-
     # Whether the notification has been read
     is_read = models.BooleanField(default=False)
     
@@ -121,3 +137,13 @@ class Notification(models.Model):
 
     def _str_(self):
         return f"Notification for {self.recipient.username}: {self.notification_type}"
+    
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def _str_(self):
+        return f'Comment by {self.user.username} on {self.post.caption[:20]}'

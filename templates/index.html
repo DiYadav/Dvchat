@@ -5,12 +5,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-      defer
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" />
     <link href="{% static 'css/custom.css' %}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <title>Home</title>
   </head>
   <body class="bg-black font-sans">
@@ -19,136 +17,160 @@
       <div class="flex-1 container mx-auto p-4">
         <h1 class="text-2xl text-white font-bold mb-4">Feeds</h1>
         <div class="lg:flex lg:space-x-8">
-          <div
-            class="lg:w-7/12 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide pr-2"
-          >
+          <!-- Left: Posts -->
+          <div class="lg:w-7/12 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide pr-2">
             {% for post in posts reversed %}
-            <div class="bg-slate-950 rounded-2xl shadow">
+            {% with post.comments.all|dictsortreversed:"id" as all_comments %}
+            <div class="bg-slate-900 rounded-2xl shadow" x-data="{ showComments: false }">
+              <!-- Header -->
               <div class="flex items-center justify-between px-4 py-3 border-b">
                 <div class="flex items-center space-x-3">
-                  {% if post.user.username %}
-                  <a
-                    href="{% url 'profile_view' username=post.user.username %}"
-                  >
-                    {% else %}
-                    <a href="#">
-                      {% endif %}
-                      <img
-                        src="{{ post.user.profile.profileimg.url }}"
-                        class="w-10 h-10 rounded-full"
-                        alt="@{{ post.user }}"
-                      />
-                    </a>
-                  </a>
-                  <span class="font-semibold text-gray-700"
-                    >@{{ post.user }}</span
-                  >
+                 {% if post.user.username %}
+  <a href="{% url 'profile_view' username=post.user.username %}">
+{% else %}
+  <a href="#">
+{% endif %}
+    <img src="{{ post.profile_user }}" class="w-10 h-10 rounded-full" />
+  </a>
+                  <span class="font-semibold text-white">@{{ post.user }}</span>
                 </div>
                 <a href="#" class="text-gray-400 hover:text-gray-600">...</a>
               </div>
 
+              <!-- Post Image -->
               {% if post.image %}
-              <img
-                src="{{ post.image.url }}"
-                class="w-full h-[450px] object-cover"
-                alt="Post image"
-              />
+              <img src="{{ post.image.url }}" class="w-full h-[450px] object-cover" />
               {% else %}
-              <img
-                src="{% static 'assets/images/posts/default-post.jpg' %}"
-                class="w-full"
-                alt="Default image"
-              />
+              <img src="{% static 'assets/images/posts/default-post.jpg' %}" class="w-full" />
               {% endif %}
 
-              <div class="px-4 py-3 space-y-2">
-                <div class="flex items-center space-x-4">
-                  <a
-                    href="/like-post?post_id={{ post.id }}"
-                    class="text-blue-500 hover:underline"
-                  >
-                    ❤️ {% if post.no_of_likes == 0 %}No likes {% elif
-                    post.no_of_likes == 1 %}Liked by 1 person {% else %}Liked by
-                    {{ post.no_of_likes }} people {% endif %}
-                  </a>
-                  <a href="#" class="text-gray-500">💬</a>
-                  <a
-                    href="{% if post.image %}{{ post.image.url }}{% endif %}"
-                    {%
-                    if
-                    post.image
-                    %}download{%
-                    endif
-                    %}
-                    class="ml-auto text-gray-500 {% if not post.image %}cursor-not-allowed opacity-50{% endif %}"
-                  >
+              <!-- Post Body -->
+              <div class="px-4 py-3 space-y-6">
+                <!-- Like, Comment, Download -->
+                <div class="flex items-center w-[300px] space-x-4">
+                  <a href="/like-post?post_id={{ post.id }}" class="flex items-center space-x-1 group">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         width="24" height="24"
+         viewBox="0 0 24 24"
+         fill="{% if post.is_liked %}red{% else %}none{% endif %}"
+         stroke="{% if post.is_liked %}red{% else %}currentColor{% endif %}"
+         stroke-width="2"
+         stroke-linecap="round"
+         stroke-linejoin="round"
+         class="lucide lucide-heart transition-colors text-white duration-300">
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+    </svg>
+    <span class="text-sm {% if post.is_liked %}text-white{% else %}text-gray-400{% endif %}">
+      {% if post.no_of_likes == 0 %}
+        No likes
+      {% elif post.no_of_likes == 1 %}
+        Liked by 1 person
+      {% else %}
+        Liked by {{ post.no_of_likes }} people
+      {% endif %}
+    </span>
+  </a>
+
+                 <button @click="showComments = !showComments" class="text-white text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle-icon lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+                  </button>
+
+                  <a href="{% if post.image %}{{ post.image.url }}{% endif %}"
+                     {% if post.image %}download{% endif %}
+                     class="ml-auto text-gray-500 {% if not post.image %}cursor-not-allowed opacity-50{% endif %}">
                     ⬇️
                   </a>
                 </div>
-                <div class="text-sm text-gray-700">
+
+                <!-- Caption -->
+                <div class="text-sm text-white">
                   <strong>{{ post.user }}</strong> {{ post.caption }}
                 </div>
 
-                <div class="space-y-2 text-sm">
-                  <div class="flex items-start space-x-3">
-                    <img
-                      src="{% static 'assets/images/avatars/avatar-1.jpg' %}"
-                      class="w-8 h-8 rounded-full"
-                    />
-                    <div class="bg-gray-100 p-2 rounded">
-                      Y’all like Billie Eilish? ❤️ 😜
+                <!-- Comment Section -->
+                <div x-show="showComments" x-transition>
+                  <!-- All Comments Scrollable -->
+                  <div class="max-h-60 overflow-y-auto scrollbar-hide pr-2 space-y-3 mt-2">
+                    {% for comment in all_comments %}
+                    <div class="flex items-start space-x-3 text-sm">
+                      {# Commenter's Profile Picture #}
+                            <a href="{% url 'profile_view' comment.user.username %}" class="flex-shrink-0">
+                                {% if comment.user.profile.profileimg %}
+                                    <img
+                                        src="{{ comment.user.profile.profileimg.url }}"
+                                        class="w-8 h-8 rounded-full object-cover"
+                                        alt="{{ comment.user.username }}'s profile"
+                                    />
+                                {% else %}
+                                    <img
+                                        src="{% static 'blank-profile-picture.png' %}"
+                                        class="w-8 h-8 rounded-full object-cover"
+                                        alt="Default profile"
+                                    />
+                                {% endif %}
+                      </a>
+                      <div class="w-[800px] text-white p-2 rounded">
+                        <strong>{{ comment.user.username }}</strong> {{ comment.text }}
+                        <p class="text-xs text-gray-400 mt-1">{{ comment.created_at|timesince }} ago</p>
+                      </div>
                     </div>
+                    {% endfor %}
                   </div>
-                  <div class="flex items-start space-x-3">
-                    <img
-                      src="{% static 'assets/images/avatars/avatar-1.jpg' %}"
-                      class="w-8 h-8 rounded-full"
-                    />
-                    <div class="bg-gray-100 p-2 rounded">
-                      She's my favorite 😋
+
+                  <!-- Comment Input Box -->
+                  {% if user.is_authenticated %}
+                  <form action="{% url 'add_comment' post.id %}" method="post" class="relative mt-4">
+                    {% csrf_token %}
+                    <div class="flex items-center space-x-2">
+                      <img src="{{profile_user.profileimg.url}}" class="w-8 h-8 rounded-full" />
+                      <input
+                        type="text"
+                        name="comment_text"
+                        placeholder="Post a comment"
+                        class="w-full rounded-2xl px-3 py-2 text-sm bg-slate-800 text-white"
+                        required
+                      />
+                      <button type="submit"
+                        class="text-sm text-white bg-blue-500 px-3 py-1 rounded-xl hover:bg-blue-600">Post</button>
                     </div>
-                  </div>
+                  </form>
+                  {% endif %}
                 </div>
               </div>
             </div>
+            {% endwith %}
             {% endfor %}
           </div>
 
+          <!-- Right: Suggestions -->
           <div class="lg:w-5/12">
             <div class="bg-slate-800 rounded-xl shadow">
               <div class="border-b px-6 py-4 flex justify-between items-center">
-                <h2 class="text-white text-lg font-semibold">
-                  Users You Can Follow
-                </h2>
-                <a href="{{ id_user }}" class="text-blue-500 text-sm"
-                  >Refresh</a
-                >
+                <h2 class="text-white text-lg font-semibold">Users You Can Follow</h2>
+                <a href="{{ id_user }}" class="text-blue-500 text-sm">Refresh</a>
               </div>
               <div class="divide-y">
                 {% for suggestion in suggestions_username_profile_list %}
                 <div class="flex items-center justify-between px-6 py-4">
                   <div class="flex text-white items-center space-x-3">
                     <a href="/profile/{{ suggestion.user }}">
-                      <img
-                        src="{{ suggestion.profileimg.url }}"
-                        class="w-10 h-10 rounded-full"
-                      />
+                      <img src="{{ suggestion.profileimg.url }}" class="w-10 h-10 rounded-full" />
                     </a>
                     <div>
                       <p class="font-semibold">{{ suggestion.user }}</p>
                       <p class="text-sm text-white">{{ suggestion.bio }}</p>
                     </div>
                   </div>
-                  <a
-                    href="/profile/{{ suggestion.user }}"
-                    class="border px-3 py-1 rounded text-sm text-white hover:bg-pink-600 hover:text-white"
-                    >View</a
-                  >
+                  <a href="/profile/{{ suggestion.user }}"
+                     class="border px-3 py-1 rounded text-sm text-white hover:bg-pink-600 hover:text-white">
+                    View
+                  </a>
                 </div>
                 {% endfor %}
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
