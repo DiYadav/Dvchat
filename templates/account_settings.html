@@ -1,0 +1,116 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Settings</title>
+  <link rel="stylesheet" href="{% static 'assets/css/tailwind.css' %}" />
+</head>
+
+<body class="bg-gray-100 font-sans text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-gray-900 text-white px-3 py-1 rounded-full font-bold text-sm">Dv</div>
+        <span class="text-lg font-semibold">Dvchat</span>
+      </div>
+      <div class="flex flex-row items-center space-x-6 text-sm font-medium text-gray-700">
+        <a href="#" class="hover:underline hover:text-indigo-600 transition duration-200">Home</a>
+        <a href="#" class="hover:underline hover:text-indigo-600 transition duration-200">Contact</a>
+        <a href="#" class="hover:underline hover:text-indigo-600 transition duration-200">About</a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <img src="{{ user_profile.profileimg.url }}" alt="Avatar" class="w-8 h-8 rounded-full object-cover" />
+        <button class="bg-gray-900 text-white px-4 py-1 rounded text-sm hover:bg-gray-800">Upload</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Layout -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid md:grid-cols-4 gap-8">
+
+      <!-- Sidebar -->
+      <aside class="space-y-6">
+        <h2 class="text-2xl font-bold">Settings</h2>
+        <ul class="space-y-3 text-sm font-medium">
+          <li><a href="{% url 'settings' %}" class="block px-4 py-2 rounded-full hover:bg-gray-100">Public profile</a></li>
+          <li><a href="{% url 'account_settings' %}" class="block px-4 py-2 rounded-full bg-gray-200">Account settings</a></li>
+          <li><a href="{% url 'notifications' %}" class="block px-4 py-2 rounded-full hover:bg-gray-100">Notifications</a></li>
+          <li><a href="#" class="block px-4 py-2 rounded-full hover:bg-gray-100">PRO Account</a></li>
+        </ul>
+      </aside>
+
+      <!-- Content -->
+      <main class="md:col-span-3 space-y-10">
+        <!-- Account Settings -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-xl font-semibold mb-4">Account <span class="text-indigo-600">Settings</span></h3>
+          <form method="POST">
+            {% csrf_token %}
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium mb-1">Username</label>
+                <input type="text" name="username" value="{{ user.username }}" class="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Email</label>
+                <input type="email" name="email" value="{{ user.email }}" class="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium mb-1">Alternate Email</label>
+                <input type="email" name="alt_email" value="{{ user_profile.alt_email }}" class="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium mb-1">Languages Known</label>
+                <div class="flex flex-wrap gap-4">
+                  {% for lang in languages %}
+                  <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="languages" value="{{ lang }}" {% if lang in user_profile.languages_known %}checked{% endif %}>
+                    <span>{{ lang }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="text-right mt-6">
+              <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Save Changes</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Social Media -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-xl font-semibold mb-4">Social <span class="text-indigo-600">Links</span></h3>
+          <form method="POST">
+            {% csrf_token %}
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium mb-1">Facebook</label>
+                <input type="text" name="facebook" value="{{ user_profile.facebook }}" class="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Twitter</label>
+                <input type="text" name="twitter" value="{{ user_profile.twitter }}" class="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Instagram</label>
+                <input type="text" name="instagram" value="{{ user_profile.instagram }}" class="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+            </div>
+            <div class="text-right mt-6">
+              <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700">Update Links</button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

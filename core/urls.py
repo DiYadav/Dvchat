@@ -13,7 +13,6 @@ urlpatterns = [
     path('face_login/',views.face_login, name='face_login'),
     path('password_login/', views.password_login, name='password_login'), #password login match
     path('about',views.about_us, name='about'),
-    path('account-setting',views.account_setting, name='account-setting'),
     path('edit_profile/', views.edit_profile_view, name='edit_profile'),
     path('create_post/', views.create_post_view, name='create_post'),
     path('logout', views.logout_view, name='logout'),
@@ -24,4 +23,6 @@ urlpatterns = [
     path('notifications/', views.notifications, name='notifications'),
     path('add-comment/<uuid:post_id>/',views.add_comment, name='add_comment'),
     path('like-post/', views.like_post, name='like_post'),
-]
+    path('account_settings',views.account_settings, name='account_settings'),
+
+   ]

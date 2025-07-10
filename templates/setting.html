@@ -1,149 +1,827 @@
-{% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{% static 'assets/images/favicon.png' %}" rel="icon" type="image/png">
-    <title>Settings</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'assets/css/icons.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/css/uikit.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'assets/css/tailwind.css' %}">
+  <meta charset="UTF-8">
+  <title>Settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+      <style>
+        /* Base transitions for body and sidebar */
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .aside-sidebar {
+            transition: background-color 0.3s ease, border-color 0.3s ease, width 0.3s ease;
+        }
+
+        /* Dark mode specific styles for general elements */
+        .dark .aside-sidebar {
+            background-color: #1a202c; /* Your dark-bg color */
+            border-color: #2d3748; /* Your dark-card border color */
+        }
+        .dark .aside-sidebar .text-gray-600 {
+            color: #a0aec0; /* Lighter text for dark sidebar links */
+        }
+        .dark .aside-sidebar .hover\:text-indigo-600:hover {
+            color: #48dbfb; /* Accent blue for hover in dark mode */
+        }
+        .dark .border-r {
+            border-color: #4a5568; /* Darker border for sidebar */
+        }
+
+        /* Active link styling for sidebar */
+        .sidebar-link.active {
+            color: #4f46e5; /* A distinct color for the active link in light mode */
+            font-weight: 600;
+            position: relative; /* For the animated underline */
+        }
+        .dark .sidebar-link.active {
+             color: #48dbfb; /* Accent blue for active link in dark mode */
+        }
+        .sidebar-link.active::after { /* Animated underline */
+            content: '';
+            position: absolute;
+            bottom: -3px; /* Adjust position as needed */
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #4f46e5; /* Light mode underline color */
+            transform: scaleX(0);
+            transform-origin: bottom left;
+            transition: transform 0.3s ease-out;
+        }
+        .dark .sidebar-link.active::after {
+            background-color: #48dbfb; /* Dark mode underline color */
+        }
+        .sidebar-link.active.link-activated::after { /* Trigger animation */
+            transform: scaleX(1);
+        }
+
+        /* Card background transitions and text color adjustments for dark mode */
+        .settings-card {
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .dark .bg-white {
+            background-color: #2d3748;
+        }
+        .dark .bg-gray-100 {
+            background-color: #4a5568;
+        }
+        .dark .border-gray-300 {
+            border-color: #4a5568;
+        }
+        .dark .text-gray-900 {
+            color: #f7fafc;
+        }
+        .dark .text-gray-800 {
+            color: #edf2f7;
+        }
+        .dark .text-gray-700 {
+            color: #e2e8f0;
+        }
+        .dark .text-gray-600 {
+            color: #cbd5e0;
+        }
+        .dark .text-gray-500 {
+            color: #a0aec0;
+        }
+
+        /* Responsive sidebar toggle (optional, for smaller screens) */
+        @media (max-width: 768px) {
+            .grid-cols-4 {
+                grid-template-columns: 1fr; /* Stack columns on smaller screens */
+            }
+            .aside-sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%; /* Hidden by default */
+                height: 100%;
+                width: 75%; /* Adjust width as needed */
+                z-index: 50;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            }
+            .aside-sidebar.open {
+                left: 0;
+            }
+            .main-content {
+                padding-left: 0; /* Remove padding when sidebar is fixed */
+            }
+            .sidebar-toggle-button {
+                display: block; /* Show toggle button */
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 60;
+                background-color: #4f46e5;
+                color: white;
+                padding: 0.5rem;
+                border-radius: 0.375rem;
+            }
+        }
+    </style>
 
 </head>
+<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <button class="sidebar-toggle-button md:hidden hidden">
+        <i class="ri-menu-line"></i>
+    </button>
 
-<body class="bg-black font-sans">
-            <div class="container m-auto bg-black"> 
-
-                <h1 class="text-2xl leading-none text-gray-900 tracking-tight mt-3"><a href="/">Home</a> / Account Setting for <b>{{user.username}}</b> </h1>
-                    <ul class="mt-5 -mr-3 flex-nowrap lg:overflow-hidden overflow-x-scroll uk-tab">
-                    <li class="uk-active"><a href="#">General</a></li>
-                    <li><a href="{% url 'profile_view' request.user.username %}">Profile</a></li>
-                    <li><a href="">Privacy</a></li>
-                    <li><a href="#">Notification</a></li>
-                    <li><a href="#">Social links</a></li>
-                    <li><a href="#">Billing</a></li>
-                    <li><a href="#">Security</a></li>
-                </ul> 
-                <br>
-                <hr>
-                <div class="grid lg:grid-cols-3 mt-12 gap-8">
-                    <div>
-                        <h3 class="text-xl mb-2"> General</h3>
-                        <p></p>
-                    </div>
-                    <div class="bg-white rounded-md lg:shadow-lg shadow col-span-2">
-                        
-                    <form action="" method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                       <div class="grid grid-cols-2 gap-3 lg:p-6 p-4">
-                           
-                           
-                            <div class="col-span-2">
-                                <label for=""> Profile Image</label>
-                                <img width="100" height="100" src="{{user_profile.profileimg.url}}" />
-                                <input type="file" name="image" value="" class="shadow-none bg-gray-100">
-                            </div>
-                            <div class="col-span-2">
-                                <label for="about">Bio</label>  
-                                <textarea id="about" name="bio" rows="3"  class="shadow-none bg-gray-100">{{user_profile.bio}}</textarea>
-                            </div> 
-                            <div class="col-span-2">
-                                <label for=""> Location</label>
-                                <input type="text" name="location" value="{{user_profile.location}}" class="shadow-none bg-gray-100">
-                            </div>
-                            
-                       </div> 
-    
-                       <div class="bg-gray-10 p-6 pt-0 flex justify-end space-x-3">
-                           <button class="p-2 px-4 rounded bg-gray-50 text-red-500"> <a href="/">Cancel</a> </button>
-                           <button type="submit" class="button bg-blue-700"> Save </button>
-                       </div>
-                    </form>
-    
-                    </div>
-
-                    <div>
-                        <h3 class="text-xl mb-2"> Privacy</h3>
-                        <p> </p>
-                    </div>
-                    <div class="bg-white rounded-md lg:shadow-lg shadow lg:p-6 p-4 col-span-2">
-
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4> Who can follow me ?</h4>
-                                <div>  </div>
-                            </div>
-                            <div class="switches-list -mt-8 is-large">
-                                <div class="switch-container">
-                                    <label class="switch"><input type="checkbox"><span class="switch-button"></span> </label>
-                                </div>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4> Show my activities ?</h4>
-                                <div>  </div>
-                            </div>
-                            <div class="switches-list -mt-8 is-large">
-                                <div class="switch-container">
-                                    <label class="switch"><input type="checkbox" checked><span class="switch-button"></span> </label>
-                                </div>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4> Search engines?</h4>
-                                <div>  </div>
-                            </div>
-                            <div class="switches-list -mt-8 is-large">
-                                <div class="switch-container">
-                                    <label class="switch"><input type="checkbox"><span class="switch-button"></span> </label>
-                                </div>
-                            </div>
-                        </div>
-                        <hr>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <h4> Allow Commenting?</h4>
-                                <div>  </div>
-                            </div>
-                            <div class="switches-list -mt-8 is-large">
-                                <div class="switch-container">
-                                    <label class="switch"><input type="checkbox"><span class="switch-button"></span> </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div> 
-    
-                    </div>
-                    <br>
-
-                </div>
-
-            </div>
+    <div class="grid grid-cols-4 min-h-screen">
+        <aside class="col-span-1 border-r aside-sidebar  p-6 space-y-6">
             
+            <h2 class="text-2xl font-extrabold text-white dark:text-white mb-6"><a href="/profile/{{ user_profile.user }}" class="font-semibold"><-</a> Settings</h2>
+            <ul class="space-y-3 text-base font-medium text-gray-600">
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="profile">
+                    <i class="ri-user-line mr-3"></i> Profile
+                </a></li>
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="account">
+                    <i class="ri-settings-4-line mr-3"></i> Account Settings
+                </a></li>
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="notification">
+                    <i class="ri-notification-3-line mr-3"></i> Notification
+                </a></li>
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="appearance">
+                    <i class="ri-palette-line mr-3"></i> Appearance
+                </a></li>
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="email">
+                    <i class="ri-mail-line mr-3"></i> Email Notification 
+                </a></li>
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="privacy">
+                    <i class="ri-lock-line mr-3"></i> Privacy
+                </a></li>
+                <li><a href="#" class="sidebar-link flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200" data-section="security">
+                    <i class="ri-shield-check-line mr-3"></i> Security
+                </a></li>
+                <li><a href="{%url 'about'%}" class="flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-accent-blue">
+                    <i class="ri-information-line mr-3"></i> About Us
+                </a></li>
+                <li><a href="{%url 'logout'%}" class="flex items-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-accent-blue">
+                    <i class="ri-logout-box-r-line mr-3"></i> Logout
+                </a></li>
+            </ul>
+        </aside>
+
+
+        <main class="col-span-3 p-8">
+            <div id="profile" class="settings-section">
+                <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Profile Settings</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Manage your personal profile information.</p>
+                <div class=" settings-card rounded-lg shadow-xl p-6">
+                    <p class="text-gray-700 dark:text-gray-300">This is where your profile details (name, picture, bio, etc.) would be edited.</p><br>
+                    <a href="{%url 'edit_profile'%}"<button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Edit Profile</button></a>
+                </div>
+            </div>
+
+            <div id="account" class="settings-section hidden">
+    <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Account Settings</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Manage how your account works, including your personal details and preferences.</p>
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Basic Information</h3>
+        <form>
+            <div class="mb-4">
+                <label for="acc_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                <input type="text" id="acc_username" value="yourusername" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+            </div>
+            <div class="mb-4">
+                <label for="acc_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                <input type="email" id="acc_email" value="your.email@example.com" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+            </div>
+            <div class="mb-4">
+                <label for="acc_fullname" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+                <input type="text" id="acc_fullname" value="John Doe" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+            </div>
+            <div class="mb-4">
+                <label for="acc_bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>
+                <textarea id="acc_bio" rows="3" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm resize-y">A passionate web developer and learner.</textarea>
+            </div>
+
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-800">
+                Save Basic Info
+            </button>
+        </form>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Content Preferences</h3>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Show sensitive content</span>
+            <label for="sensitiveContentToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="sensitiveContentToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-sm mt-2">Toggle to display or hide content that may be sensitive.</p>
+
+        <div class="flex items-center justify-between mt-6">
+            <span class="text-gray-700 dark:text-gray-300">Auto-play videos</span>
+            <label for="autoplayVideosToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="autoplayVideosToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-sm mt-2">Automatically play videos when they appear in your feed.</p>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Password Management</h3>
+        <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-700 dark:hover:bg-red-800">
+            Change Password
+        </button>
+        <button class="ml-4 inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Forgot Password?
+        </button>
+    </div>
+</div>
+
+           <div id="notification" class="settings-section hidden">
+    <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Notification Settings</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Manage when and how you receive notifications across the application.</p>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">In-App Alerts</h3>
+        <p class="text-gray-500 text-sm mb-4">Control notifications you receive while actively using the application.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">New message alerts</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Friend request updates</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Activity on your posts (likes, comments)</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Mentions and tags</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-gray-300">Product updates and tips</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Delivery Preferences</h3>
+        <p class="text-gray-500 text-sm mb-4">Choose how you prefer to receive your notifications.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Play notification sounds</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Enable vibration</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Do Not Disturb (Quiet Hours)</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="dndToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div id="dndTimeInputs" class="hidden pl-6 pt-2 text-gray-700 dark:text-gray-300">
+            <div class="flex items-center mb-2">
+                <label for="dndStartTime" class="block text-sm font-medium mr-2">From:</label>
+                <input type="time" id="dndStartTime" value="22:00" class="block w-24 px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 text-sm">
+            </div>
+            <div class="flex items-center">
+                <label for="dndEndTime" class="block text-sm font-medium mr-2">To:</label>
+                <input type="time" id="dndEndTime" value="07:00" class="block w-24 px-2 py-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 text-sm">
+            </div>
+        </div>
+    </div>
+    
+    <button class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Save All Notification Preferences</button>
+</div>
+
+           <div id="appearance" class="settings-section hidden">
+    <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Appearance Settings</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Customize the look and feel of your application.</p>
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-gray-300 text-lg">Dark Mode</span>
+            <label for="darkModeToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="darkModeToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-sm mt-2">Switch between light and dark themes for a personalized viewing experience.</p>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Theme Color</h3>
+        <p class="text-gray-500 text-sm mb-4">Choose your preferred accent color for the interface elements.</p>
+        <div class="flex space-x-3">
+            <button class="w-10 h-10 rounded-full bg-blue-500 border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-blue-700"></button>
+            <button class="w-10 h-10 rounded-full bg-purple-500 border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-purple-700"></button>
+            <button class="w-10 h-10 rounded-full bg-pink-500 border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-pink-700"></button>
+            <button class="w-10 h-10 rounded-full bg-red-500 border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-red-700"></button>
+            <button class="w-10 h-10 rounded-full bg-yellow-500 border-2 border-transparent hover:border-gray-400 focus:outline-none focus:border-yellow-700"></button>
+        </div>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Font & Text</h3>
+        <p class="text-gray-500 text-sm mb-4">Adjust text size and typography to your liking.</p>
+
+        <div class="mb-4">
+            <label for="fontSize" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Font Size</label>
+            <select id="fontSize" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium (Recommended)</option>
+                <option value="large">Large</option>
+                <option value="extra-large">Extra Large</option>
+            </select>
         </div>
 
+        <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-gray-300">Use system font</span>
+            <label for="systemFontToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="systemFontToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-sm mt-2">Use the default font for your device/operating system.</p>
     </div>
- <!-- Scripts
-    ================================================== -->
-    <script src="{% static 'assets/js/tippy.all.min.js' %}"></script>  
-    <script src="{% static 'assets/js/jquery-3.3.1.min.js' %}"></script>
-    <script src="{% static 'assets/js/uikit.js' %}"></script>
-    <script src="{% static 'assets/js/simplebar.js' %}"></script>
-    <script src="{% static 'assets/js/custom.js' %}"></script>
-    
+
+    <div class=" settings-card rounded-lg shadow-xl overflow-hidden p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Layout & Interaction</h3>
+        <p class="text-gray-500 text-sm mb-4">Control how content is displayed and interacts.</p>
+
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-gray-700 dark:text-gray-300">Compact layout</span>
+            <label for="compactLayoutToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="compactLayoutToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-sm mt-2">Reduce spacing between elements for more content on screen.</p>
 
 
-    <script src="{% static '../../unpkg.com/ionicons%405.2.3/dist/ionicons.js' %}"></script>
+        <div class="flex items-center justify-between mt-6">
+            <span class="text-gray-700 dark:text-gray-300">Enable UI animations</span>
+            <label for="animationsToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="animationsToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-sm mt-2">Smooth transitions and visual effects for interactions.</p>
+    </div>
+
+    <button class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Save Appearance Preferences</button>
+</div>
+
+           <div id="email" class="settings-section hidden">
+    <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Email Notification Settings</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Configure your email alerts for various activities and choose your preferred frequency.</p>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Activity & Updates</h3>
+        <p class="text-gray-500 text-sm mb-4">Receive emails for important activities and platform updates.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Account activity alerts</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">New message notifications</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Comments on your posts</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-gray-300">Mentions and tags</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Promotional & Newsletters</h3>
+        <p class="text-gray-500 text-sm mb-4">Stay informed about new features, promotions, and curated content.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Promotional emails & offers</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Product newsletters</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-gray-300">Survey invitations</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" value="" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Email Frequency</h3>
+        <p class="text-gray-500 text-sm mb-4">Choose how often you'd like to receive batched email updates.</p>
+        <div class="mb-4">
+            <label for="emailFrequency" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Digest frequency</label>
+            <select id="emailFrequency" class="block w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+                <option value="instant">Instant (as they happen)</option>
+                <option value="daily" selected>Daily Digest</option>
+                <option value="weekly">Weekly Digest</option>
+                <option value="monthly">Monthly Digest</option>
+                <option value="never">Never (Only critical alerts)</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Save Email Preferences</button>
+</div>
+
+        <div id="privacy" class="settings-section hidden overflow-y-auto scrollbar-hide">
+    <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Privacy Settings</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Control what information is visible to others and how your data is used.</p>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Profile Visibility</h3>
+        <p class="text-gray-500 text-sm mb-4">Manage who can see your profile and associated content.</p>
+
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-gray-700 dark:text-gray-300">Who can see my profile?</span>
+            <select class="block w-1/3 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+                <option value="everyone">Everyone</option>
+                <option value="friends">Friends</option>
+                <option value="only-me">Only Me</option>
+            </select>
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Allow search engines to link to my profile</span>
+            <label for="searchEngineToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="searchEngineToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 ml-8">This makes your profile discoverable on Google, Bing, etc.</p>
+
+        <div class="flex items-center justify-between mt-4">
+            <span class="text-gray-700 dark:text-gray-300">Display online status</span>
+            <label for="onlineStatusToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="onlineStatusToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 ml-8">Let others know when you are active.</p>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Data & Tracking</h3>
+        <p class="text-gray-500 text-sm mb-4">Control how your data is collected and used for personalization.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Allow personalized ads</span>
+            <label for="personalizedAdsToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="personalizedAdsToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 ml-8">Receive ads based on your activity and interests.</p>
+
+        <div class="flex items-center justify-between mt-4">
+            <span class="text-gray-700 dark:text-gray-300">Share usage data for improvements</span>
+            <label for="usageDataToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="usageDataToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 ml-8">Help us improve the app by sending anonymous usage data.</p>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Communication</h3>
+        <p class="text-gray-500 text-sm mb-4">Control who can contact you directly.</p>
+
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-gray-700 dark:text-gray-300">Who can send me messages?</span>
+            <select class="block w-1/3 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+                <option value="everyone">Everyone</option>
+                <option value="friends">Friends</option>
+                <option value="no-one">No One</option>
+            </select>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <span class="text-gray-700 dark:text-gray-300">Block unknown callers</span>
+            <label for="blockCallersToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="blockCallersToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 ml-8">Automatically decline calls from numbers not in your contacts.</p>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Content & Tagging</h3>
+        <p class="text-gray-500 text-sm mb-4">Manage how others can interact with your content.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Who can tag me in posts?</span>
+            <select class="block w-1/3 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-gray-100 sm:text-sm">
+                <option value="everyone">Everyone</option>
+                <option value="friends">Friends</option>
+                <option value="no-one" selected>No One</option>
+            </select>
+        </div>
+
+        <div class="flex items-center justify-between mt-4">
+            <span class="text-gray-700 dark:text-gray-300">Review tags before appearing on profile</span>
+            <label for="reviewTagsToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="reviewTagsToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 ml-8">Approve or reject posts you're tagged in before they go live.</p>
+    </div>
+
+    <button class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Save All Privacy Preferences</button>
+</div>
+
+          <div id="security" class="settings-section hidden">
+    <h2 class="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">Security Settings</h2>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Enhance the security of your account and manage trusted devices.</p>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Authentication Methods</h3>
+        <p class="text-gray-500 text-sm mb-4">Manage how you sign in and add extra security layers to your account.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Enable Two-Factor Authentication (2FA)</span>
+            <label for="enable2FAToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="enable2FAToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 mb-4 ml-8">Requires a code from your phone in addition to your password.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Enable Face Lock (Biometric)</span>
+            <label for="faceLockToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="faceLockToggle" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <p class="text-gray-500 text-xs mt-0 mb-4 ml-8">Use your device's facial recognition for quick and secure access.</p>
+
+        <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Manage Biometrics & 2FA</button>
+        <button class="mt-4 ml-3 px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Recovery Options
+        </button>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Login Alerts & Sessions</h3>
+        <p class="text-gray-500 text-sm mb-4">Receive notifications for new logins and manage where you're logged in.</p>
+
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Email alerts for new logins</span>
+            <label for="loginAlertsToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="loginAlertsToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-gray-700 dark:text-gray-300">Show login location</span>
+            <label for="loginLocationToggle" class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="loginLocationToggle" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 dark:bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-600"></div>
+            </label>
+        </div>
+
+        <h4 class="text-md font-semibold text-gray-800 dark:text-gray-200 mt-6 mb-3">Your Active Sessions</h4>
+        <ul class="list-disc pl-5 text-gray-700 dark:text-gray-300 text-sm space-y-2">
+            <li>
+                <div class="flex justify-between items-center">
+                    <span>Current Session (Chrome on Windows, Pimpri-Chinchwad)</span>
+                    <span class="text-green-600">Active</span>
+                </div>
+            </li>
+            <li>
+                <div class="flex justify-between items-center">
+                    <span>Desktop (Firefox on macOS, Mumbai, 2 days ago)</span>
+                    <button class="text-red-500 hover:text-red-700 text-sm ml-4">Log out</button>
+                </div>
+            </li>
+            <li>
+                <div class="flex justify-between items-center">
+                    <span>Mobile (Safari on iOS, Delhi, 5 days ago)</span>
+                    <button class="text-red-500 hover:text-red-700 text-sm ml-4">Log out</button>
+                </div>
+            </li>
+        </ul>
+        <button class="mt-6 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-700 dark:hover:bg-red-800">
+            Log out of all other sessions
+        </button>
+    </div>
+
+    <div class=" settings-card rounded-lg shadow-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Account Deactivation</h3>
+        <p class="text-gray-500 text-sm mb-4">Temporarily deactivate your account. Your profile will be hidden until you reactivate it.</p>
+        <button class="px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 dark:bg-orange-700 dark:hover:bg-orange-800">
+            Deactivate Account
+        </button>
+        <p class="text-gray-500 text-xs mt-3">This action is reversible. For permanent deletion, please contact support.</p>
+    </div>
+
+    <button class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors dark:bg-blue-700 dark:hover:bg-blue-800">Save Security Preferences</button>
+</div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            const settingsSections = document.querySelectorAll('.settings-section');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const htmlElement = document.documentElement;
+            const sidebar = document.querySelector('.aside-sidebar');
+            const sidebarToggleButton = document.querySelector('.sidebar-toggle-button');
+            const overlay = document.querySelector('.overlay');
+
+            // --- Section Switching Logic ---
+            const showSection = (sectionId) => {
+                // Hide all sections
+                settingsSections.forEach(section => {
+                    section.classList.add('hidden');
+                });
+
+                // Show the target section
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                }
+
+                // Update active link styling in sidebar with animation
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active', 'link-activated');
+                });
+                const activeLink = document.querySelector(`.sidebar-link[data-section="${sectionId}"]`);
+                if (activeLink) {
+                    activeLink.classList.add('active');
+                    // Trigger the animation for the underline
+                    setTimeout(() => {
+                        activeLink.classList.add('link-activated');
+                    }, 50); // Small delay to ensure active class is applied first
+                }
+
+                // Close sidebar on mobile after selection
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                }
+            };
+
+            // Set initial active section (e.g., 'profile' on page load)
+            showSection('profile');
+
+            // Add click event listeners to all sidebar links
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default anchor link behavior
+                    const sectionId = link.getAttribute('data-section');
+                    showSection(sectionId);
+                });
+            });
+
+            // --- Dark Mode Toggle Logic ---
+            const setDarkMode = (isEnabled) => {
+                if (isEnabled) {
+                    htmlElement.classList.add('dark');
+                    localStorage.setItem('darkMode', 'enabled');
+                } else {
+                    htmlElement.classList.remove('dark');
+                    localStorage.setItem('darkMode', 'disabled');
+                }
+            };
+
+            // Check for saved dark mode preference on page load
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                setDarkMode(true);
+                if (darkModeToggle) {
+                    darkModeToggle.checked = true;
+                }
+            } else {
+                setDarkMode(false);
+                if (darkModeToggle) {
+                    darkModeToggle.checked = false;
+                }
+            }
+
+            // Listen for changes on the dark mode toggle switch
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('change', () => {
+                    setDarkMode(darkModeToggle.checked);
+                });
+            }
+
+            // --- Mobile Sidebar Toggle Logic ---
+            if (sidebarToggleButton) {
+                sidebarToggleButton.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    overlay.classList.toggle('active');
+                });
+
+                overlay.addEventListener('click', () => {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                });
+            }
+
+            // Handle sidebar visibility based on screen size
+            const handleSidebarDisplay = () => {
+                if (window.innerWidth <= 768) {
+                    sidebarToggleButton.classList.remove('hidden');
+                    sidebar.classList.remove('open'); // Ensure sidebar is closed on mobile resize
+                    overlay.classList.remove('active');
+                } else {
+                    sidebarToggleButton.classList.add('hidden');
+                    sidebar.classList.remove('open'); // Ensure it's not "fixed" open but part of grid
+                    sidebar.style.transform = ''; // Remove mobile transform
+                    overlay.classList.remove('active'); // Hide overlay on desktop
+                }
+            };
+
+            // Initial call and listen for resize
+            handleSidebarDisplay();
+            window.addEventListener('resize', handleSidebarDisplay);
+        });
+
+         document.addEventListener('DOMContentLoaded', () => {
+        // ... (Keep existing JavaScript code for section switching, dark mode, mobile sidebar etc.) ...
+
+        // Add specific logic for the Do Not Disturb toggle in Notification settings
+        const dndToggle = document.getElementById('dndToggle');
+        const dndTimeInputs = document.getElementById('dndTimeInputs');
+
+        if (dndToggle && dndTimeInputs) {
+            // Function to toggle visibility of time inputs
+            const toggleDNDInputs = () => {
+                if (dndToggle.checked) {
+                    dndTimeInputs.classList.remove('hidden');
+                } else {
+                    dndTimeInputs.classList.add('hidden');
+                }
+            };
+
+            // Initial state based on checkbox
+            toggleDNDInputs();
+
+            // Listen for changes on the DND toggle
+            dndToggle.addEventListener('change', toggleDNDInputs);
+        }
+    });
+    </script>
 </body>
-
 </html>

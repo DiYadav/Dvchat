@@ -275,24 +275,42 @@ def upload(request):
 def search(request):
     user = request.user
     user_profile = Profile.objects.get(user=user)
+    username_profile_list = []
+    searched_username = ''
+    total_users = 0
+    pages = 0
+    images = 0
+    groups = 0
+    globals_count = 0  # You can rename it based on your model logic
 
     if request.method == "POST":
-        username = request.POST['username']
-        username_object = User.objects.filter(username__icontains=username)
+        searched_username = request.POST.get('username', '')
+        matched_users = User.objects.filter(username__icontains=searched_username)
 
-        username_profile_list = []
-
-        for user_obj in username_object:
-            profile = Profile.objects.filter(user=user_obj).first() # Filter Profile by User object (ForeignKey)
+        for user_obj in matched_users:
+            profile = Profile.objects.filter(user=user_obj).first()
             if profile:
                 username_profile_list.append(profile)
-    else:
-        username_profile_list = []  # Handle GET request fallback
 
-    return render(request, 'search.html',{
-        'user_profile':user_profile,
-        'username_profile_list' : username_profile_list,
-    })
+        # 👉 Count logic
+        total_users = len(username_profile_list)
+        pages = sum(1 for profile in username_profile_list if hasattr(profile, 'page'))
+        images = sum(1 for profile in username_profile_list if profile.profileimg)
+        groups = sum(1 for profile in username_profile_list if hasattr(profile, 'group'))
+        globals_count = sum(1 for profile in username_profile_list if profile.user.email.endswith('@gmail.com'))
+
+    context = {
+        'user_profile': user_profile,
+        'username_profile_list': username_profile_list,
+        'username': searched_username,
+        'total_users': total_users,
+        'pages': pages,
+        'images': images,
+        'groups': groups,
+        'globals': globals_count,
+    }
+    return render(request, 'search.html', context)
+
 
 @login_required(login_url='face_login')
 def like_post(request):
@@ -370,56 +388,52 @@ def profile_view(request, username):
 def follow(request):
     if request.method == 'POST':
         user_to_follow_username = request.POST.get('user')
-        follower_user = request.user
+        follower_user = request.user # The currently logged-in user
+
+        # Get the User object for the person being followed/unfollowed
         user_being_followed = get_object_or_404(User, username=user_to_follow_username)
 
         # Prevent a user from following themselves
         if follower_user == user_being_followed:
             messages.error(request, "You cannot follow yourself.")
-            return redirect('profile_view', username=user_to_follow_username)
+            return redirect('profile_view', username=follower_user.username)
 
+        # Check if the follower_user is already following user_being_followed
         is_following = Follower.objects.filter(
             follower=follower_user,
             user=user_being_followed
         ).exists()
 
         if is_following:
+            # If already following, unfollow (delete the relationship)
             Follower.objects.filter(
                 follower=follower_user,
                 user=user_being_followed
             ).delete()
             messages.success(request, f"You have unfollowed {user_to_follow_username}.")
         else:
+            # If not following, follow (create the relationship)
             Follower.objects.create(
                 follower=follower_user,
                 user=user_being_followed
             )
             messages.success(request, f"You are now following {user_to_follow_username}.")
 
+            # Optional: Create a notification for the user who was just followed
+            # Ensure Notification model and import are correct for this to work
+            # if Notification is not defined/imported, this line will cause an error
+            Notification.objects.create(
+                recipient=user_being_followed,
+                sender=follower_user,
+                notification_type='follow',
+                message=f"{follower_user.username} started following you."
+            )
+
+        # Redirect back to the profile page of the user who was followed/unfollowed
         return redirect('profile_view', username=user_to_follow_username)
+
+    # If the request is GET, redirect to home or index
     return redirect('index')
-
-
-@login_required(login_url='face_login')
-def settings(request):
-    user_profile = Profile.objects.get(user=request.user)
-
-    if request.method == 'POST':
-        # You can simplify this if/else block
-        image = request.FILES.get('image')
-        bio = request.POST['bio']
-        location = request.POST['location']
-
-        if image: # Check if a new image was uploaded
-            user_profile.profileimg = image
-        
-        user_profile.bio = bio
-        user_profile.location = location
-        user_profile.save()
-        
-        return redirect('settings')
-    return render(request, 'setting.html', {'user_profile': user_profile})
-
 
 def register(request):
     if request.method == 'POST':
@@ -532,11 +546,6 @@ def logout_view(request): # Keep this one, and use auth_logout
 
 def about_us(request):
     return render(request, "about_us.html" )
-
-
-@login_required(login_url='face_login')
-def account_setting(request):
-    return render (request,'account-setting.html')
 
 @login_required(login_url='face_login')
 def dashboard(request):
@@ -652,3 +661,52 @@ def like_post(request):
 
     post.save()
     return redirect(request.META.get('HTTP_REFERER', '/'))
+
+@login_required(login_url='face_login')
+def account_settings(request):
+    user_profile = Profile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        # Handle both forms together (or split later)
+        user.username = request.POST.get('username')
+        user.email = request.POST.get('email')
+        user_profile.alt_email = request.POST.get('alt_email')
+        user_profile.facebook = request.POST.get('facebook')
+        user_profile.twitter = request.POST.get('twitter')
+        user_profile.instagram = request.POST.get('instagram')
+
+        # Optional: Handle languages checkboxes
+        languages = request.POST.getlist('languages')
+        user_profile.languages_known = languages
+
+        user.save()
+        user_profile.save()
+        return redirect('account_settings')
+
+    context = {
+        'user_profile': user_profile,
+        'languages': ['English', 'French', 'Hindi', 'Spanish', 'Arabic', 'Italian']
+    }
+    return render(request, 'account_settings.html', context)
+
+
+@login_required(login_url='face_login')
+def settings(request):
+    user_profile = Profile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        # You can simplify this if/else block
+        image = request.FILES.get('image')
+        bio = request.POST['bio']
+        location = request.POST['location']
+
+        if image: # Check if a new image was uploaded
+            user_profile.profileimg = image
+        # Don't set image = user_profile.profileimg if image is None, just leave it unchanged if no new upload
+        
+        user_profile.bio = bio
+        user_profile.location = location
+        user_profile.save()
+        
+        return redirect('settings')
+    return render(request, 'setting.html', {'user_profile': user_profile})

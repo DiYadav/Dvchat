@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Search | Dvchat</title>
-  <link href="favicon.png" rel="icon" type="image/png" />
+  <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
@@ -14,15 +14,21 @@
   <!-- Header -->
   <header class="bg-white shadow sticky top-0 z-50">
     <div class="max-w-6xl mx-auto flex justify-between items-center px-4 py-3">
-      
+
       <!-- Logo & Search -->
       <div class="flex items-center space-x-6">
         <a href="/" class="text-2xl font-bold text-indigo-600 hidden sm:block">Dvchat</a>
-        
-        <form action="search" method="POST" class="relative w-full max-w-sm">
+
+        <!-- ✅ Updated search form -->
+        <form action="{% url 'search' %}" method="POST" class="relative w-full max-w-sm">
           {% csrf_token %}
-          <input name="username" type="text" placeholder="Search username..." 
-            class="w-full pl-4 pr-12 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" />
+          <input
+            name="username"
+            type="text"
+            placeholder="Search username..."
+            class="w-full pl-4 pr-12 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+            value="{{ username|default:'' }}"
+          />
           <button type="submit" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-indigo-600">
             <i class="fas fa-search"></i>
           </button>
@@ -31,11 +37,7 @@
 
       <!-- Actions -->
       <div class="flex items-center space-x-4">
-        <span class="text-sm text-gray-700 hidden md:block">Welcome <b>{{ user.username }}</b></span>
-        
-        <a href="#" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm transition hidden md:flex items-center">
-          <i class="fas fa-plus-circle mr-2"></i> New Post
-        </a>
+        <span class="text-sm text-gray-700 hidden md:block underline">Welcome <b>{{ user.username }}</b></span>
 
         <!-- Profile Dropdown -->
         <div class="relative group">
@@ -44,7 +46,7 @@
           </button>
           <div class="absolute hidden group-hover:block right-0 mt-2 bg-white shadow-lg rounded w-40 text-sm">
             <a href="/settings" class="block px-4 py-2 hover:bg-gray-100">Settings</a>
-            <a href="explore.html" class="block px-4 py-2 hover:bg-gray-100">Explore</a>
+            <a href="/explore" class="block px-4 py-2 hover:bg-gray-100">Explore</a>
             <a href="/logout" class="block px-4 py-2 hover:bg-gray-100 text-red-500">Logout</a>
           </div>
         </div>
@@ -55,42 +57,47 @@
   <!-- Main Content -->
   <main class="max-w-6xl mx-auto px-4 py-10">
     <div class="lg:flex lg:space-x-6">
-      
-      <!-- Sidebar -->
-      <aside class="mb-8 lg:mb-0 lg:w-1/4">
-        <h2 class="text-lg font-semibold mb-2">Results For <span class="text-indigo-600">{{ username }}</span></h2>
-        <ul class="space-y-2 text-sm text-gray-700">
-          <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Friends <span>34</span></a></li>
-          <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Pages <span>9</span></a></li>
-          <li><a href="#" class="block px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Images</a></li>
-          <li><a href="#" class="block px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Groups</a></li>
-          <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Globals <span>18</span></a></li>
-        </ul>
-      </aside>
+<aside class="mb-8 lg:mb-0 lg:w-1/4">
+  {% if username %}
+    <h2 class="text-lg font-semibold mb-2">Results for <span class="text-indigo-600">{{ username }}</span></h2>
+  {% else %}
+    <h2 class="text-lg font-semibold mb-2">Search Results</h2>
+  {% endif %}
+  
+  <ul class="space-y-2 text-sm text-gray-700">
+    <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Friends <span>{{ total_users }}</span></a></li>
+    <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Pages <span>{{ pages }}</span></a></li>
+    <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Images <span>{{ images }}</span></a></li>
+    <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Groups <span>{{ groups }}</span></a></li>
+    <li><a href="#" class="flex justify-between px-3 py-2 bg-white rounded shadow hover:bg-indigo-50">Globals <span>{{ globals }}</span></a></li>
+  </ul>
+</aside>
 
-      <!-- Results -->
+      <!-- Search Results -->
       <section class="flex-1 h-screen overflow-y-auto no-scrollbar">
-        <p class="text-gray-500 mb-4">About 94,700,000 (0.39 sec) results</p>
+        {% if username_profile_list %}
+        <p class="text-gray-500 mb-4">About {{ username_profile_list|length }} result{{ username_profile_list|length|pluralize }} found</p>
+        {% else %}
+        <p class="text-gray-500 mb-4">No results found.</p>
+        {% endif %}
 
         {% for users in username_profile_list %}
         <div class="bg-white rounded-lg shadow-sm mb-6 flex flex-col md:flex-row overflow-hidden">
-          <a href="/profile/{{ users.user }}" class="md:w-1/4">
-            <img src="{{ users.profileimg.url }}" alt="{{ users.user }}" class="w-full h-full object-cover" />
+          <a href="/profile/{{ users.user.username }}" class="md:w-1/4">
+            <img src="{{ users.profileimg.url }}" alt="{{ users.user.username }}" class="w-full h-full object-cover" />
           </a>
           <div class="p-4 flex-1">
-            <h3 class="text-xl font-semibold"><a href="/profile/{{ users.user }}">@{{ users.user }}</a></h3>
+            <h3 class="text-xl font-semibold"><a href="/profile/{{ users.user.username }}">@{{ users.user.username }}</a></h3>
             <p class="text-sm text-gray-600">{{ users.location }}</p>
             <p class="mt-2 text-gray-700 text-sm">{{ users.bio }}</p>
           </div>
           <div class="p-4 flex items-center justify-center">
-            <a href="/profile/{{ users.user }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">View</a>
+            <a href="/profile/{{ users.user.username }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition">View</a>
           </div>
         </div>
-        {% empty %}
-        <p class="text-gray-500">No users found.</p>
         {% endfor %}
 
-        <!-- Pagination -->
+        <!-- Pagination Placeholder -->
         <div class="mt-8 flex justify-center space-x-2">
           <a href="#" class="px-3 py-2 bg-white border rounded hover:bg-gray-100 text-sm">Prev</a>
           <a href="#" class="px-3 py-2 bg-indigo-100 text-indigo-700 rounded border text-sm">1</a>
@@ -102,8 +109,5 @@
     </div>
   </main>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/uikit@3.16.20/dist/js/uikit.min.js"></script>
-  <script src="{% static 'assets/js/uikit.js' %}"></script>
 </body>
 </html>
