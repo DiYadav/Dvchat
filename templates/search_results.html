@@ -1,0 +1,94 @@
+<html>
+    <head>
+         <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+        <body class="bg-black">
+            <div class="flex">
+     {% include 'navbar.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="flex-1 container mx-auto p-4">
+    
+ <form action="{% url 'search' %}" method="get" class="ml-8 flex items-center">
+                <input type="text" name="query" placeholder="Search users or posts..." 
+                       class="px-4 py-2 rounded-l-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       value="{{ request.GET.query|default:'' }}"> 
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+    <div class="bg-gray-900 rounded-xl shadow p-6 mb-8 text-white">
+        <h2 class="text-3xl font-bold mb-6">Search Results for "{{ query }}"</h2>
+
+        {# Users Section #}
+        <div class="mb-8">
+            <h3 class="text-2xl font-semibold mb-4">Users</h3>
+            {% if users_results %}
+                <ul class="space-y-4">
+                    {% for user_data in users_results %}
+                        <li class="flex items-center bg-gray-800 p-3 rounded-lg">
+                            {% if user_data.profile and user_data.profile.profileimg %}
+                                <img src="{{ user_data.profile.profileimg.url }}" alt="Profile Image" class="w-12 h-12 rounded-full object-cover mr-4">
+                            {% else %}
+                                <img src="{% static 'images/default_profile.png' %}" alt="Default Profile Image" class="w-12 h-12 rounded-full object-cover mr-4">
+                            {% endif %}
+                            <div>
+                                <a href="{% url 'profile_view' username=user_data.user.username %}" class="font-semibold text-lg hover:underline">{{ user_data.user.username }}</a>
+                                {% if user_data.profile and user_data.profile.bio %}
+                                    <p class="text-gray-400 text-sm">{{ user_data.profile.bio|truncatechars:50 }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="ml-auto">
+                                {% if request.user != user_data.user %}
+                                    {# You might want to add a follow/unfollow button here if desired #}
+                                    {# This would require additional context or a separate AJAX call #}
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-400">No users found matching "{{ query }}".</p>
+            {% endif %}
+        </div>
+
+        <hr class="border-gray-700 my-8">
+
+        {# Posts Section #}
+        <div>
+            <h3 class="text-2xl font-semibold mb-4">Posts</h3>
+            {% if posts_results %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for post in posts_results %}
+                        <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                            <div class="flex items-center p-4">
+                                {% if post.user.profile and post.user.profile.profileimg %}
+                                    <img src="{{ post.user.profile.profileimg.url }}" alt="Profile Image" class="w-10 h-10 rounded-full mr-3 object-cover">
+                                {% else %}
+                                    <img src="{% static 'images/default_profile.png' %}" alt="Default Profile Image" class="w-10 h-10 rounded-full mr-3 object-cover">
+                                {% endif %}
+                                <a href="{% url 'profile_view' username=post.user.username %}" class="font-bold text-lg hover:underline">{{ post.user.username }}</a>
+                            </div>
+                            <img src="{{ post.image.url }}" alt="{{ post.caption }}" class="w-full h-56 object-cover">
+                            <div class="p-4">
+                                <p class="text-gray-300 text-sm mb-2">{{ post.caption }}</p>
+                                <div class="flex items-center text-gray-400 text-sm">
+                                    <i class="fas fa-heart text-red-500 mr-2"></i> {{ post.no_of_likes }} likes
+                                    <span class="ml-auto">{{ post.created_at|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-400">No posts found matching "{{ query }}".</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}
+</body>
+</html>

@@ -59,16 +59,29 @@ class Post(models.Model):
     caption = models.TextField()
     created_at = models.DateTimeField(default=datetime.now)
     no_of_likes = models.IntegerField(default=0)
+    likes = models.ManyToManyField(User, related_name='liked_posts', blank=True)
+
 
     def __str__(self):
         return self.user
-
+    
 class LikePost(models.Model):
     post_id = models.CharField(max_length=500)
     username = models.CharField(max_length=100)
 
     def __str__(self):
         return self.username
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Comment by {self.user.username} on {self.post.caption[:20]}'
+
+
 
 class FollowersCount(models.Model):
     follower = models.CharField(max_length=100)
@@ -80,11 +93,46 @@ class FollowersCount(models.Model):
 class Follower(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following_set')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers_set')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=datetime.now)
 
     class Meta:
-        # Ensures a user can only follow another user once
-        unique_together = ('follower', 'user')
+        unique_together = ('follower', 'user') # Prevents a user from following someone multiple times
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.follower.username} follows {self.user.username}"
+
+class Notification(models.Model):
+    # The user who receives the notification
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    
+    # The user who triggered the notification (e.g., the new follower, the one who liked)
+    # Can be null if the notification is system-generated (e.g., 'Welcome to FaceAI!')
+    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_notifications')
+
+    # Type of notification (e.g., 'follow', 'like', 'comment', 'message', 'welcome')
+    notification_type = models.CharField(max_length=50)
+
+   
+    
+    # Content/message of the notification
+    message = models.TextField(blank=True, null=True)
+
+    # Optional: Link to the related object (e.g., the Post, the Conversation)
+    # Using GenericForeignKey for flexibility, or specific ForeignKeys if simpler
+    # For now, we'll keep it simple, but this is a common extension.
+    # object_id = models.UUIDField(blank=True, null=True)
+    # content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, blank=True, null=True)
+    # content_object = GenericForeignKey('content_type', 'object_id')
+
+    # Whether the notification has been read
+    is_read = models.BooleanField(default=False)
+    
+    # When the notification was created
+    created_at = models.DateTimeField(default=datetime.now)
+
+    class Meta:
+        ordering = ['-created_at'] # Order by newest first
+
+    def __str__(self):
+        return f"Notification for {self.recipient.username}: {self.notification_type}"
