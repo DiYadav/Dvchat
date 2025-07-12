@@ -168,7 +168,7 @@ def index(request):
     feed = Post.objects.filter(user__in=user_following_list).order_by('-created_at')
     feed_list = list(feed)
 
-    # ✅ Add `is_liked` attribute to each post for heart coloring
+    # Add `is_liked` attribute to each post for heart coloring
     for post in feed_list:
         post.is_liked = post.likes.filter(id=request.user.id).exists()
 
@@ -521,6 +521,8 @@ def logout_view(request): # Keep this one, and use auth_logout
 def about_us(request):
     return render(request, "about_us.html" )
 
+
+
 @login_required(login_url='face_login')
 def dashboard(request):
     user = request.user
@@ -595,8 +597,6 @@ def notifications(request):
 
         return redirect('notifications') # Redirect back to notifications page
 
-
-
     context = {
 
         'notifications': user_notifications,
@@ -663,32 +663,6 @@ def account_settings(request):
     return render(request, 'account_settings.html', context)
 
 
-# @login_required(login_url='face_login')
-# def settings(request):
-#     user_profile = Profile.objects.get(user=request.user)
-
-#     if request.method == 'POST':
-#         # You can simplify this if/else block
-#         image = request.FILES.get('image')
-#         bio = request.POST['bio']
-#         location = request.POST['location']
-
-#         if image: # Check if a new image was uploaded
-#             user_profile.profileimg = image
-#         # Don't set image = user_profile.profileimg if image is None, just leave it unchanged if no new upload
-        
-#         user_profile.bio = bio
-#         user_profile.location = location
-#         user_profile.save()
-        
-#         return redirect('settings')
-#     return render(request, 'setting.html', {'user_profile': user_profile})
-
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from .models import Profile
-
 @login_required(login_url='face_login')
 def settings(request):
     user_profile = Profile.objects.get(user=request.user)
@@ -707,14 +681,14 @@ def settings(request):
 
         user_profile.bio = bio
         user_profile.location = location
-        user_profile.is_face_login_enabled = face_lock_enabled  # ✅ update toggle
+        user_profile.is_face_login_enabled = face_lock_enabled  # update toggle
         user_profile.save()
 
         return redirect('settings')
 
     return render(request, 'setting.html', {
         'user_profile': user_profile,
-        'face_login_enabled': user_profile.is_face_login_enabled  # ✅ pass to template
+        'face_login_enabled': user_profile.is_face_login_enabled  #  pass to template
     })
 
 
