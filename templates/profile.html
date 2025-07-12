@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" /> 
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <title>{{ profile_user.username }} - DVCHAT</title>
+    <title> <img
+              src="{{ profile_user.profileimg.url }}"
+              class="w-3 h-3 rounded-full border-4 border-blue-500 object-cover"
+            />- DVCHAT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </head>

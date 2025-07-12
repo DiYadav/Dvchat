@@ -110,7 +110,7 @@
                                 {% endif %}
                       </a>
                       <div class="w-[800px] text-white p-2 rounded">
-                        <strong>{{ comment.user.username }}</strong> {{ comment.text }}
+                        <strong class="text-blue-700">@{{ comment.user.username }}</strong> {{ comment.text }}
                         <p class="text-xs text-gray-400 mt-1">{{ comment.created_at|timesince }} ago</p>
                       </div>
                     </div>

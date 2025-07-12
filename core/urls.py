@@ -24,5 +24,7 @@ urlpatterns = [
     path('add-comment/<uuid:post_id>/',views.add_comment, name='add_comment'),
     path('like-post/', views.like_post, name='like_post'),
     path('account_settings',views.account_settings, name='account_settings'),
+    path("toggle-face-login/", views.toggle_face_login, name="toggle_face_login"),
+
 
    ]

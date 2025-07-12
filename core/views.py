@@ -19,6 +19,9 @@ from .models import Post
 from django.db import models 
 from .forms import ProfileUpdateForm, MessageForm 
 from datetime import datetime, timedelta
+import base64
+import json
+from django.contrib.auth import authenticate, login
 
 
 @login_required(login_url='face_login')
@@ -150,68 +153,6 @@ def edit_profile_view(request):
         form = ProfileUpdateForm(instance=user_profile)
 
     return render(request, 'edit_profile.html', {'user_profile': user_profile, 'form': form})
-
-@login_required(login_url='face_login')
-# def index(request):
-#     user_object = get_object_or_404(User, username=request.user.username)
-#     user_profile = get_object_or_404(Profile, user=user_object)
-
-#     user_following_list = []
-#     feed = []
-
-#     user_following = Follower.objects.filter(follower=request.user)
-
-#     for users_follower_obj in user_following:
-#         user_following_list.append(users_follower_obj.user.username)
-
-#     # Add the current user's own username to the list
-#     user_following_list.append(request.user.username)
-
-#     for username_in_list in user_following_list:
-#         feed_lists = Post.objects.filter(user=username_in_list).order_by('-created_at')
-#         feed.append(feed_lists)
-
-#     feed_list = list(chain(*feed))
-#     feed_list.sort(key=lambda x: x.created_at, reverse=True) # Ensure consistent ordering
-
-
-#     # --- Start of User Suggestion Logic ---
-#     all_users = User.objects.all()
-#     user_following_all = []
-
-#     for users_follower_obj in user_following:
-#         user_following_all.append(users_follower_obj.user)
-    
-#     new_suggestions_list = [x for x in list(all_users) if (x not in list(user_following_all))]
-#     current_user = User.objects.filter(username=request.user.username)
-#     final_suggestions_list = [x for x in list(new_suggestions_list) if (x not in list(current_user))]
-#     random.shuffle(final_suggestions_list)
-
-#     username_profile = []
-#     username_profile_list = []
-
-#     # Initialize suggestions_username_profile_list here, before potential loops
-#     suggestions_username_profile_list = []
-
-#     # Only run these loops if there are actual suggestions
-#     if final_suggestions_list: # Check if there are any users to suggest
-#         for user_in_suggestions in final_suggestions_list: # Renamed 'users' for clarity
-#             username_profile.append(user_in_suggestions.id)
-
-#         for ids_in_profile in username_profile: # Renamed 'ids' for clarity
-#             profile_lists = Profile.objects.filter(id_user=ids_in_profile)
-#             username_profile_list.append(profile_lists)
-
-#         suggestions_username_profile_list = list(chain(*username_profile_list))
-#     # --- End of User Suggestion Logic ---
-
-
-#     return render(request, 'index.html', {
-#         'user_profile': user_profile,
-#         'posts': feed_list,
-#         'suggestions_username_profile_list': suggestions_username_profile_list[:5]
-#     })
-
 
 @login_required(login_url='face_login')
 def index(request):
@@ -435,103 +376,136 @@ def follow(request):
     # If the request is GET, redirect to home or index
     return redirect('index')
 
+
+
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
+        email = request.POST.get('email')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
         face_image_data = request.POST.get('face_image')
 
-        if not username or not face_image_data:
-            return JsonResponse({'status': 'error', 'message': 'Missing username or face image'}, status=400)
+        # --- Validate required fields ---
+        if not all([username, email, password1, password2, face_image_data]):
+            return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
+
+        if password1 != password2:
+            return JsonResponse({'status': 'error', 'message': 'Passwords do not match'}, status=400)
+
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'status': 'error', 'message': 'Username already exists'}, status=400)
+
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'status': 'error', 'message': 'Email already registered'}, status=400)
 
         try:
-            # Decode base64 image
+            # --- Decode base64 face image ---
             face_image_data = face_image_data.split(',')[1]
             decoded_image = base64.b64decode(face_image_data)
             face_image = ContentFile(decoded_image, name=f'{username}_face.jpg')
 
-            # Convert to OpenCV image
+            # --- Convert to image and detect face ---
             np_array = np.frombuffer(decoded_image, np.uint8)
             img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-            # Get face encoding
             encodings = face_recognition.face_encodings(img)
             if not encodings:
                 return JsonResponse({'status': 'error', 'message': 'No face detected'}, status=400)
 
             encoding = encodings[0].astype(np.float64).tobytes()
 
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f'Invalid image: {e}'}, status=400)
-
-        try:
-            if User.objects.filter(username=username).exists():
-                return JsonResponse({'status': 'error', 'message': 'Username already exists'}, status=400)
-
-            user = User.objects.create(username=username)
+            # --- Create User & Profile ---
+            user = User.objects.create_user(username=username, email=email, password=password1)
             Profile.objects.create(
                 user=user,
-                id_user=user.id, # This is correct, assigning User's integer ID
+                id_user=user.id,
                 face_image=face_image,
                 face_encoding=encoding
             )
+
             return JsonResponse({'status': 'success', 'message': 'Registered successfully', 'redirect': '/face_login/'})
 
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f'Profile creation failed: {e}'}, status=400)
+            return JsonResponse({'status': 'error', 'message': f'Registration failed: {e}'}, status=500)
 
     return render(request, 'register.html')
 
 
+
 def face_login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        face_image_data = request.POST.get('face_image')
+    if request.method == "POST":
+        username = request.POST.get("username")
+        face_image_data = request.POST.get("face_image")
 
         if not username or not face_image_data:
-            return JsonResponse({'status': 'error', 'message': 'Username and face image are required'}, status=400)
+            return JsonResponse({"status": "error", "message": "Username and face image are required"}, status=400)
 
         try:
-            # Decode base64 image
-            face_image_data = face_image_data.split(',')[1]
+            user = User.objects.get(username=username)
+            profile = Profile.objects.get(user=user)
+
+            if not profile.is_face_login_enabled:
+                return JsonResponse({"status": "error", "message": "Face login is disabled for this user."}, status=403)
+
+
+            # Decode and convert image
+            face_image_data = face_image_data.split(",")[1]
             decoded_image = base64.b64decode(face_image_data)
             np_array = np.frombuffer(decoded_image, np.uint8)
             img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-            # Get encoding from captured image
-            input_encodings = face_recognition.face_encodings(img)
-            if not input_encodings:
-                return JsonResponse({'status': 'error', 'message': 'No face detected in image'}, status=400)
+            # Face encoding
+            encodings = face_recognition.face_encodings(img)
+            if not encodings:
+                return JsonResponse({"status": "error", "message": "No face detected"}, status=400)
 
-            input_encoding = input_encodings[0]
+            input_encoding = encodings[0]
+            stored_encoding = np.frombuffer(profile.face_encoding, dtype=np.float64)
 
-            try:
-                user = User.objects.get(username=username)
-                profile = Profile.objects.get(user=user)
-            except User.DoesNotExist:
-                return JsonResponse({'status': 'error', 'message': 'Username not found'}, status=404)
-            except Profile.DoesNotExist:
-                return JsonResponse({'status': 'error', 'message': 'Profile not found'}, status=404)
-
-            if not profile.face_encoding:
-                return JsonResponse({'status': 'error', 'message': 'No face encoding found for this user'}, status=400)
-
-            known_encoding = np.frombuffer(profile.face_encoding, dtype=np.float64)
-
-            # Use compare_faces with distance check
-            results = face_recognition.compare_faces([known_encoding], input_encoding, tolerance=0.45)
-            face_distance = face_recognition.face_distance([known_encoding], input_encoding)[0]
-
-            if results[0] and face_distance < 0.45:
-                # Use auth_login alias from django.contrib.auth
-                auth_login(request, user) 
-                return JsonResponse({'status': 'success', 'message': f'Welcome {user.username}', 'redirect': '/home/'})
+            matched = face_recognition.compare_faces([stored_encoding], input_encoding, tolerance=0.45)[0]
+            if matched:
+                login(request, user)
+                return JsonResponse({"status": "success", "message": f"Welcome {user.username}", "redirect": "/home/"})
             else:
-                return JsonResponse({'status': 'error', 'message': 'Face does not match the username'}, status=401)
+                return JsonResponse({"status": "error", "message": "Face not recognized"}, status=401)
 
+        except User.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "User not found"}, status=404)
+        except Profile.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "User profile not found"}, status=404)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-    return render(request, 'login.html')
+    return render(request, "login.html")  # For GET requests
+
+
+def password_login(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            username = data.get("username")
+            password = data.get("password")
+
+            if not username or not password:
+                return JsonResponse({"status": "error", "message": "Username and password are required"}, status=400)
+
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return JsonResponse({"status": "success", "message": f"Welcome {user.username}", "redirect": "/home/"})
+            else:
+                return JsonResponse({"status": "error", "message": "Invalid credentials"}, status=401)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+
+
+
 
 @login_required
 def home_view(request): # Keep this one
@@ -592,8 +566,7 @@ def dashboard(request):
     return render(request, 'dashboard.html', context)
 
 
-def password_login(request):
-    return render(request, 'password_login.html')
+
 
 
 @login_required(login_url='face_login')
@@ -690,23 +663,78 @@ def account_settings(request):
     return render(request, 'account_settings.html', context)
 
 
+# @login_required(login_url='face_login')
+# def settings(request):
+#     user_profile = Profile.objects.get(user=request.user)
+
+#     if request.method == 'POST':
+#         # You can simplify this if/else block
+#         image = request.FILES.get('image')
+#         bio = request.POST['bio']
+#         location = request.POST['location']
+
+#         if image: # Check if a new image was uploaded
+#             user_profile.profileimg = image
+#         # Don't set image = user_profile.profileimg if image is None, just leave it unchanged if no new upload
+        
+#         user_profile.bio = bio
+#         user_profile.location = location
+#         user_profile.save()
+        
+#         return redirect('settings')
+#     return render(request, 'setting.html', {'user_profile': user_profile})
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import Profile
+
 @login_required(login_url='face_login')
 def settings(request):
     user_profile = Profile.objects.get(user=request.user)
 
     if request.method == 'POST':
-        # You can simplify this if/else block
+        # Handle profile updates
         image = request.FILES.get('image')
-        bio = request.POST['bio']
-        location = request.POST['location']
+        bio = request.POST.get('bio', '')
+        location = request.POST.get('location', '')
 
-        if image: # Check if a new image was uploaded
+        # Handle face lock toggle checkbox
+        face_lock_enabled = request.POST.get('face_lock_toggle') == 'on'
+
+        if image:
             user_profile.profileimg = image
-        # Don't set image = user_profile.profileimg if image is None, just leave it unchanged if no new upload
-        
+
         user_profile.bio = bio
         user_profile.location = location
+        user_profile.is_face_login_enabled = face_lock_enabled  # ✅ update toggle
         user_profile.save()
-        
+
         return redirect('settings')
-    return render(request, 'setting.html', {'user_profile': user_profile})
+
+    return render(request, 'setting.html', {
+        'user_profile': user_profile,
+        'face_login_enabled': user_profile.is_face_login_enabled  # ✅ pass to template
+    })
+
+
+
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+
+@csrf_exempt
+@login_required
+def toggle_face_login(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            enable_face_login = data.get("enabled", True)
+            profile = Profile.objects.get(user=request.user)
+            profile.is_face_login_enabled = enable_face_login
+            profile.save()
+            return JsonResponse({"status": "success", "message": "Face login setting updated."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)

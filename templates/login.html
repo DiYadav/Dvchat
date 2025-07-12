@@ -1,117 +1,165 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <meta name="csrf-token" content="{{ csrf_token }}" />
-  </head>
-  <body class="bg-black h-screen flex items-center justify-center font-sans">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="csrf-token" content="{{ csrf_token }}" />
+</head>
+<body class="bg-black h-screen flex items-center justify-center font-sans">
 
-    <!-- Container -->
-    <div class="flex bg-black text-white rounded-lg shadow-lg max-w-5xl w-full p-4">
+  <div class="flex bg-black text-white rounded-lg shadow-lg max-w-5xl w-full p-4">
+    
+    <!-- Left Image -->
+    <div class="bg-slate-500 hidden lg:block w-1/2">
+      <img src="{% static 'images/world.png' %}" alt="AppImage" class="w-full top-10" />
+    </div>
 
-      <!-- Left Side Image Mock -->
-      <div class="bg-slate-500 hidden lg:block w-1/2 ">
-        <img src="{% static 'images/world.png' %}" alt="AppImage" class="w-full top-10" />
-      </div>
+    <!-- Right Form -->
+    <div class="w-full lg:w-1/2 flex flex-col justify-center px-6 py-8 space-y-6">
+      <h1 class="text-4xl font-bold text-center mb-4">DVCHAT</h1>
 
-      <!-- Right Side Form -->
-      <div class="w-full lg:w-1/2 flex flex-col justify-center px-6 py-8 space-y-6">
+      <!-- Username (shared for both logins) -->
+      <input
+        id="username"
+        name="username"
+        type="text"
+        placeholder="Username"
+        class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none mb-0"
+      />
 
-        <h1 class="text-4xl font-bold text-center mb-4">DVCHAT</h1>
-
-        <!-- Username Input -->
-        <input
-          id="username"
-          type="text"
-          placeholder="Username"
-          class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
-        />
-
-        <!-- Password Input -->
+      <!-- Password Login Section -->
+      <div id="credentials-login" class="space-y-4">
         <input
           id="password"
+          name="password"
           type="password"
           placeholder="Password"
           class="w-full p-3 rounded bg-gray-800 text-white focus:outline-none"
         />
-
-        <!-- Buttons -->
         <button
           onclick="handlePasswordLogin()"
-          class="bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
+          class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
         >Login</button>
-
         <div class="flex items-center justify-center text-sm text-gray-400">OR</div>
+        <button
+          id="showFaceLogin"
+          class="w-full bg-white text-black py-2 rounded hover:bg-gray-200 transition"
+        >Use Face Login Instead</button>
+      </div>
 
-        <!-- Face login video -->
-        <video id="video" autoplay muted class="w-full h-48 object-cover rounded border-2 border-gray-600"></video>
+      <!-- Face Login Section -->
+      <div id="face-login-area" class="hidden flex flex-col gap-3">
+        <video id="video" autoplay muted class="w-full h-48 object-cover rounded-2xl border-2 border-gray-600 my-2"></video>
         <button
           id="capture-button"
-          class="bg-white text-black py-2 rounded hover:bg-gray-200 transition"
+          class="w-full bg-pink-500 text-white py-2 rounded-2xl hover:bg-pink-600 transition"
         >Login with Face</button>
+        <button
+          id="backToCredential"
+          class="w-full bg-gray-700 text-white py-2 rounded-2xl hover:bg-gray-600 transition"
+        >Back to Credential Login</button>
+      </div>
 
-        <div id="loginMessage" class="text-sm text-center text-red-400 min-h-[1rem]"></div>
+      <!-- Message -->
+      <div id="loginMessage" class="text-sm text-center text-green-500 min-h-[1rem]"></div>
 
-        <div class="text-sm text-center">
-          Don’t have an account? <a href="{% url 'register' %}" class="text-blue-400 hover:underline">Sign up</a>
-        </div>
+      <!-- Register link -->
+      <div class="text-sm text-center">
+        Don’t have an account? <a href="{% url 'register' %}" class="text-blue-400 hover:underline">Sign up</a>
       </div>
     </div>
+  </div>
 
-    <!-- Scripts -->
-    <script>
-      const video = document.getElementById("video");
-      const captureBtn = document.getElementById("capture-button");
-      const canvas = document.createElement("canvas");
+  <!-- Scripts -->
+  <script>
+    const video = document.getElementById("video");
+    const captureBtn = document.getElementById("capture-button");
+    const canvas = document.createElement("canvas");
+    const messageDiv = document.getElementById("loginMessage");
 
-      const getCSRFToken = () => document.querySelector('meta[name="csrf-token"]').content;
+    const credentialsLogin = document.getElementById("credentials-login");
+    const faceLoginArea = document.getElementById("face-login-area");
+    const showFaceLoginBtn = document.getElementById("showFaceLogin");
+    const backToCredentialBtn = document.getElementById("backToCredential");
+
+    // Switch to face login
+    showFaceLoginBtn.onclick = () => {
+      credentialsLogin.classList.add("hidden");
+      faceLoginArea.classList.remove("hidden");
 
       navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
         video.srcObject = stream;
+      }).catch(() => {
+        messageDiv.innerText = "Camera not accessible.";
+      });
+    };
+
+    // Switch back to credentials login
+    backToCredentialBtn.onclick = () => {
+      credentialsLogin.classList.remove("hidden");
+      faceLoginArea.classList.add("hidden");
+
+      if (video.srcObject) {
+        const tracks = video.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      }
+    };
+
+    // Face Login Logic
+    captureBtn.onclick = async () => {
+      const username = document.getElementById("username").value.trim();
+      if (!username) {
+        messageDiv.innerText = "Enter username first.";
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      const imageData = canvas.toDataURL("image/jpeg");
+
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("face_image", imageData);
+
+      const response = await fetch("{% url 'face_login' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData,
       });
 
-      captureBtn.onclick = async () => {
-        const username = document.getElementById("username").value.trim();
-        if (!username) return document.getElementById("loginMessage").innerText = "Enter username first.";
+      const result = await response.json();
+      messageDiv.innerText = result.message;
+      if (result.status === "success") window.location.href = "/";
+    };
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext("2d").drawImage(video, 0, 0);
-        const imageData = canvas.toDataURL("image/jpeg");
+    // Password Login Logic
+    async function handlePasswordLogin() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-        const formData = new FormData();
-        formData.append("username", username);
-        formData.append("face_image", imageData);
-
-        const response = await fetch("{% url 'face_login' %}", {
-          method: "POST",
-          headers: { "X-CSRFToken": getCSRFToken() },
-          body: formData,
-        });
-
-        const result = await response.json();
-        document.getElementById("loginMessage").innerText = result.message;
-        if (result.status === "success") window.location.href = "/";
-      };
-
-      async function handlePasswordLogin() {
-        const username = document.getElementById("username").value.trim();
-        const password = document.getElementById("password").value.trim();
-        const response = await fetch("{% url 'password_login' %}", {
-          method: "POST",
-          headers: {
-            "X-CSRFToken": getCSRFToken(),
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-        });
-        const result = await response.json();
-        document.getElementById("loginMessage").innerText = result.message;
-        if (result.status === "success") window.location.href = "/";
+      if (!username || !password) {
+        messageDiv.innerText = "Enter both username and password.";
+        return;
       }
-    </script>
-  </body>
+
+      const response = await fetch("{% url 'password_login' %}", {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').content,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const result = await response.json();
+      messageDiv.innerText = result.message;
+      if (result.status === "success") window.location.href = "/";
+    }
+  </script>
+</body>
 </html>

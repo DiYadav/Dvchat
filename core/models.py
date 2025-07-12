@@ -48,6 +48,7 @@ class Profile(models.Model):
     # Face recognition fields
     face_image = models.ImageField(upload_to="user_faces/", null=True, blank=True)
     face_encoding = models.BinaryField(null=True, blank=True)
+    is_face_login_enabled = models.BooleanField(default=True)  # NEW field
 
     def __str__(self):
         return self.user.username
