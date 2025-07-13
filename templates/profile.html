@@ -4,19 +4,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" /> 
+    <link href="{% static 'favicon.png' %}" rel="icon" type="image/png" />
     <link href="{% static 'css/custom.css' %}" rel="stylesheet">
-    <title> <img
-              src="{{ profile_user.profileimg.url }}"
-              class="w-3 h-3 rounded-full border-4 border-blue-500 object-cover"
-            />- DVCHAT</title>
+    <title>{{ profile_user_obj.username }} - DVCHAT</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
   </head>
   <body class="bg-black font-sans">
     <div class="flex">
       {% include 'navbar.html' %}
+
       <div class="flex-1 container mx-auto p-4">
+        <!-- Profile Header -->
         <div class="bg-gray-900 rounded-xl shadow p-6 mb-8 text-white">
           <div class="flex items-center space-x-6">
             <img
@@ -59,6 +57,51 @@
           </div>
         </div>
 
+        <!-- Tabs: Followers & Following -->
+        <div class="flex justify-between mb-6">
+          <div id="followersTab" class="cursor-pointer text-center w-1/2 py-2 bg-gray-800 text-white rounded-l-lg hover:bg-blue-700 transition">
+            Followers ({{ followers_count }})
+          </div>
+          <div id="followingTab" class="cursor-pointer text-center w-1/2 py-2 bg-gray-800 text-white rounded-r-lg hover:bg-blue-700 transition">
+            Following ({{ following_count }})
+          </div>
+        </div>
+
+        <!-- Followers List -->
+        <div id="followerListContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-10 hidden">
+          {% for user in followers_list %}
+            <a href="{% url 'profile_view' user.username %}" class="block bg-gray-800 text-white p-4 rounded-xl hover:bg-blue-600 transition">
+              <div class="flex items-center space-x-4">
+                <img src="{{ user.profile.profileimg.url }}" alt="{{ user.username }}" class="w-12 h-12 rounded-full border-2 border-blue-500 object-cover" />
+                <div>
+                  <div class="font-bold">{{ user.username }}</div>
+                  <div class="text-gray-400 text-sm">@{{ user.username }}</div>
+                </div>
+              </div>
+            </a>
+          {% empty %}
+            <p class="text-white col-span-full text-center">No followers found.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Following List -->
+        <div id="followingListContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-10 hidden">
+          {% for user in following_list %}
+            <a href="{% url 'profile_view' user.username %}" class="block bg-gray-800 text-white p-4 rounded-xl hover:bg-blue-600 transition">
+              <div class="flex items-center space-x-4">
+                <img src="{{ user.profile.profileimg.url }}" alt="{{ user.username }}" class="w-12 h-12 rounded-full border-2 border-pink-500 object-cover" />
+                <div>
+                  <div class="font-bold">{{ user.username }}</div>
+                  <div class="text-gray-400 text-sm">@{{ user.username }}</div>
+                </div>
+              </div>
+            </a>
+          {% empty %}
+            <p class="text-white col-span-full text-center">Not following anyone.</p>
+          {% endfor %}
+        </div>
+
+        <!-- Posts Section -->
         <h2 class="text-3xl font-bold text-white mb-6">Posts by {{ profile_user.username }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {% for post in profile_posts %}
@@ -66,11 +109,7 @@
               <div class="flex items-center justify-between px-4 py-3 border-b">
                 <div class="flex items-center space-x-3">
                   <a href="/profile/{{ post.user }}">
-                    <img
-                      src="{{ profile_user.profileimg.url }}"
-                      class="w-10 h-10 rounded-full"
-                      alt="Profile of {{ post.user }}"
-                    />
+                    <img src="{{ profile_user.profileimg.url }}" class="w-10 h-10 rounded-full" />
                   </a>
                   <span class="font-semibold text-gray-700">@{{ post.user }}</span>
                 </div>
@@ -78,9 +117,9 @@
               </div>
 
               {% if post.image %}
-                <img src="{{ post.image.url }}" class="w-full h-64 object-cover" alt="Post image" />
+                <img src="{{ post.image.url }}" class="w-full h-64 object-cover" />
               {% else %}
-                <img src="{% static 'assets/images/posts/default-post.jpg' %}" class="w-full h-64 object-cover" alt="Default image" />
+                <img src="{% static 'assets/images/posts/default-post.jpg' %}" class="w-full h-64 object-cover" />
               {% endif %}
 
               <div class="px-4 py-3 space-y-2">
@@ -89,11 +128,11 @@
                     ❤ {% if post.no_of_likes == 0 %}No likes{% elif post.no_of_likes == 1 %}Liked by 1 person{% else %}Liked by {{ post.no_of_likes }} people{% endif %}
                   </a>
                   <a href="#" class="text-gray-500">💬</a>
-                  <a
-                    href="{% if post.image %}{{ post.image.url }}{% endif %}"
-                    {% if post.image %}download{% endif %}
-                    class="ml-auto text-gray-500 {% if not post.image %}cursor-not-allowed opacity-50{% endif %}"
-                  >⬇</a>
+                  <img 
+  src="{% if user.profile.profileimg %}{{ user.profile.profileimg.url }}{% else %}{% static 'images/default-profile.png' %}{% endif %}" 
+  alt="{{ user.username }}" 
+  class="w-12 h-12 rounded-full border-2 object-cover" 
+/>
                 </div>
                 <div class="text-sm text-gray-700">
                   <strong>{{ post.user }}</strong> {{ post.caption }}
@@ -106,5 +145,37 @@
         </div>
       </div>
     </div>
+
+    <!-- Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const followersTab = document.getElementById('followersTab');
+        const followingTab = document.getElementById('followingTab');
+        const followersContainer = document.getElementById('followerListContainer');
+        const followingContainer = document.getElementById('followingListContainer');
+
+        let lastClicked = null;
+
+        function toggleList(tab) {
+          if (lastClicked === tab) {
+            followersContainer.classList.add('hidden');
+            followingContainer.classList.add('hidden');
+            lastClicked = null;
+          } else {
+            if (tab === 'followers') {
+              followersContainer.classList.remove('hidden');
+              followingContainer.classList.add('hidden');
+            } else {
+              followingContainer.classList.remove('hidden');
+              followersContainer.classList.add('hidden');
+            }
+            lastClicked = tab;
+          }
+        }
+
+        followersTab.addEventListener('click', () => toggleList('followers'));
+        followingTab.addEventListener('click', () => toggleList('following'));
+      });
+    </script>
   </body>
 </html>

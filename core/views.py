@@ -47,6 +47,9 @@ def message_inbox(request):
         'user_profile': request.user.profile,
     }
     return render(request, 'message_inbox.html', context)
+
+
+
 @login_required(login_url='face_login')
 def conversation_detail(request, conversation_id):
     conversation = get_object_or_404(Conversation, id=conversation_id)
@@ -276,53 +279,96 @@ def like_post(request):
     return redirect(request.META.get('HTTP_REFERER', '/')) # Redirect back to previous page
 
 
-@login_required # Ensures only logged-in users can access profile pages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from .models import User, Profile, Post, Follower
+
+@login_required  # Ensures only logged-in users can access profile pages
 def profile_view(request, username):
     """
     Renders the profile page for a given username.
     """
-    # 1. Fetch the profile user's data
+    # 1. Get the profile owner (User object)
     profile_user_obj = get_object_or_404(User, username=username)
 
-    # Get the custom Profile object associated with this User
+    # 2. Get or create the Profile linked to that User
     profile_user_profile, created = Profile.objects.get_or_create(user=profile_user_obj)
 
-    # 2. Determine if it's the logged-in user's own profile
+    # 3. Check if the current user is viewing their own profile
     is_own_profile = (request.user == profile_user_obj)
 
-    # 3. Fetch posts by this user
-    # Post.user is a CharField, so filter by username string
+    # 4. Get all posts created by this user (Post.user is assumed to be a username string)
     profile_posts = Post.objects.filter(user=profile_user_obj.username).order_by('-created_at')
 
-    # 4. Calculate follower/following counts
-    # Follower.user and Follower.follower are ForeignKeys to User, so filter by User objects
+    # 5. Follower counts
     followers_count = Follower.objects.filter(user=profile_user_obj).count()
     following_count = Follower.objects.filter(follower=profile_user_obj).count()
-
-    # Count number of posts
     posts_count = profile_posts.count()
 
-    # 5. Determine if the logged-in user is following this profile (if not their own)
+    # 6. Check if the logged-in user is following this profile
     is_following = False
     if not is_own_profile:
-        # Follower.follower and Follower.user are ForeignKeys to User, so filter by User objects
-        if Follower.objects.filter(follower=request.user, user=profile_user_obj).exists():
-            is_following = True
+        is_following = Follower.objects.filter(follower=request.user, user=profile_user_obj).exists()
 
-    # Prepare context data to pass to the template
+    # 7. Lists of followers and following (for display)
+    followers_list = User.objects.filter(
+        id__in=Follower.objects.filter(user=profile_user_obj).values_list('follower', flat=True)
+    )
+
+    following_list = User.objects.filter(
+        id__in=Follower.objects.filter(follower=profile_user_obj).values_list('user', flat=True)
+    )
+
     context = {
-        'profile_user': profile_user_profile,
-        'profile_user_obj': profile_user_obj,
+        'profile_user': profile_user_profile,           # Profile model
+        'profile_user_obj': profile_user_obj,           # User model
         'profile_posts': profile_posts,
         'is_own_profile': is_own_profile,
         'is_following': is_following,
         'followers_count': followers_count,
         'following_count': following_count,
         'posts_count': posts_count,
-        'user_profile': request.user.profile # Assuming current logged in user's profile is needed for sidebar
+        'followers_list': followers_list,
+        'following_list': following_list,
+        'user_profile': request.user.profile  # For sidebar, optional
     }
 
     return render(request, 'profile.html', context)
+
+
+# from django.contrib.auth.decorators import login_required
+# from django.shortcuts import render, get_object_or_404
+# from django.contrib.auth.models import User
+# from .models import Profile, Post, Follower
+
+# @login_required
+# def profile_view(request, username):
+#     profile_user_obj = get_object_or_404(User, username=username)
+#     profile_user = get_object_or_404(Profile, user=profile_user_obj)
+
+#     followers_list = [f.follower for f in Follower.objects.filter(user=profile_user_obj)]
+#     following_list = [f.user for f in Follower.objects.filter(follower=profile_user_obj)]
+
+#     profile_posts = Post.objects.filter(user=profile_user_obj)
+#     posts_count = profile_posts.count()
+
+#     is_following = Follower.objects.filter(user=profile_user_obj, follower=request.user).exists()
+#     is_own_profile = request.user == profile_user_obj
+
+#     context = {
+#         'profile_user_obj': profile_user_obj,
+#         'profile_user': profile_user,
+#         'followers_list': followers_list,
+#         'following_list': following_list,
+#         'followers_count': len(followers_list),
+#         'following_count': len(following_list),
+#         'posts_count': posts_count,
+#         'profile_posts': profile_posts,
+#         'is_following': is_following,
+#         'is_own_profile': is_own_profile,
+#     }
+#     return render(request, 'profile.html', context)
+
 
 
 @login_required(login_url='face_login')
