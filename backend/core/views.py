@@ -751,12 +751,12 @@ def like_post(request):
 
 @login_required(login_url='face_login')
 def account_settings(request):
-    user_profile = Profile.objects.get(user=request.user)
+    user_profile = Profile.objects.get(User=request.user)
 
     if request.method == 'POST':
         # Handle both forms together (or split later)
-        user.username = request.POST.get('username')
-        user.email = request.POST.get('email')
+        User.username = request.POST.get('username')
+        User.email = request.POST.get('email')
         user_profile.alt_email = request.POST.get('alt_email')
         user_profile.facebook = request.POST.get('facebook')
         user_profile.twitter = request.POST.get('twitter')
@@ -766,7 +766,7 @@ def account_settings(request):
         languages = request.POST.getlist('languages')
         user_profile.languages_known = languages
 
-        user.save()
+        User.save()
         user_profile.save()
         return redirect('account_settings')
 
