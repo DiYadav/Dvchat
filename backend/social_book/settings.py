@@ -40,10 +40,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'widget_tweaks',
-    'chat'
+    'chat',
+    "rest_framework",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -142,3 +145,6 @@ INSTALLED_APPS += ['channels']
 
 ASGI_APPLICATION = 'dvchat.asgi.application'
 LOGIN_URL = '/face_login/'
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]

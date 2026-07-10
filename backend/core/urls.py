@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import TestAPIView
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -25,6 +26,7 @@ urlpatterns = [
     path('like-post/', views.like_post, name='like_post'),
     path('account_settings',views.account_settings, name='account_settings'),
     path("toggle-face-login/", views.toggle_face_login, name="toggle_face_login"),
+    path("api/test/", TestAPIView.as_view()),
 
 
    ]

@@ -422,7 +422,75 @@ def follow(request):
     # If the request is GET, redirect to home or index
     return redirect('index')
 
+import json
 
+from django.contrib.auth import authenticate, login
+from django.http import JsonResponse
+
+
+def password_login(request):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {
+                "status": "error",
+                "message": "Only POST requests are allowed."
+            },
+            status=405
+        )
+
+    try:
+
+        data = json.loads(request.body)
+
+        username = data.get("username")
+        password = data.get("password")
+
+        if not username or not password:
+
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Username and password are required."
+                },
+                status=400
+            )
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        if user is None:
+
+            return JsonResponse(
+                {
+                    "status": "error",
+                    "message": "Invalid username or password."
+                },
+                status=401
+            )
+
+        login(request, user)
+
+        return JsonResponse(
+            {
+                "status": "success",
+                "message": f"Welcome {user.username}",
+                "redirect": "/home/"
+            }
+        )
+
+    except Exception as e:
+
+        return JsonResponse(
+            {
+                "status": "error",
+                "message": str(e)
+            },
+            status=500
+        )
 
 def register(request):
     if request.method == 'POST':
@@ -526,29 +594,29 @@ def face_login(request):
     return render(request, "login.html")  # For GET requests
 
 
-def password_login(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            username = data.get("username")
-            password = data.get("password")
+# def password_login(request):
+#     if request.method == "POST":
+#         try:
+#             data = json.loads(request.body)
+#             username = data.get("username")
+#             password = data.get("password")
 
-            if not username or not password:
-                return JsonResponse({"status": "error", "message": "Username and password are required"}, status=400)
+#             if not username or not password:
+#                 return JsonResponse({"status": "error", "message": "Username and password are required"}, status=400)
 
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                return JsonResponse({"status": "success", "message": f"Welcome {user.username}", "redirect": "/home/"})
-            else:
-                return JsonResponse({"status": "error", "message": "Invalid credentials"}, status=401)
+#             user = authenticate(username=username, password=password)
+#             if user is not None:
+#                 login(request, user)
+#                 return JsonResponse({"status": "success", "message": f"Welcome {user.username}", "redirect": "/home/"})
+#             else:
+#                 return JsonResponse({"status": "error", "message": "Invalid credentials"}, status=401)
 
-        except json.JSONDecodeError:
-            return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+#         except json.JSONDecodeError:
+#             return JsonResponse({"status": "error", "message": "Invalid JSON data"}, status=400)
+#         except Exception as e:
+#             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+#     return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
 
 
 
@@ -569,7 +637,7 @@ def about_us(request):
 
 
 
-@login_required(login_url='face_login')
+# @login_required(login_url='face_login')
 def dashboard(request):
     user = request.user
     user_profile = get_object_or_404(Profile, user=user)
@@ -758,3 +826,11 @@ def toggle_face_login(request):
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
     return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+
+
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+class TestAPIView(APIView):
+    def get(self, request):
+        return Response({"message": "Backend Connected"})
