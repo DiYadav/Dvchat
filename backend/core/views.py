@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login, logout as auth_logout# Alias Django's logout to avoid name clash with your function
 from itertools import chain
+from rest_framework import status
 import random
 from django.urls import reverse
 from django.http import HttpResponseRedirect
@@ -22,6 +23,8 @@ from datetime import datetime, timedelta
 import base64
 import json
 from django.contrib.auth import authenticate, login
+from PIL import Image
+import io
 
 
 @login_required(login_url='face_login')
@@ -492,45 +495,95 @@ def password_login(request):
             status=500
         )
 
-def register(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-        face_image_data = request.POST.get('face_image')
+class RegisterAPIView(APIView):
 
-        # --- Validate required fields ---
+    permission_classes = []
+
+    def post(self, request):
+
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password1 = request.data.get("password1")
+        password2 = request.data.get("password2")
+        face_image_data = request.data.get("face_image")
+
+        # Required Fields
         if not all([username, email, password1, password2, face_image_data]):
-            return JsonResponse({'status': 'error', 'message': 'All fields are required'}, status=400)
+            return Response(
+                {
+                    "status": "error",
+                    "message": "All fields are required."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if password1 != password2:
-            return JsonResponse({'status': 'error', 'message': 'Passwords do not match'}, status=400)
+        if password1 != password2:             # Password Match
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Passwords do not match."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if User.objects.filter(username=username).exists():
-            return JsonResponse({'status': 'error', 'message': 'Username already exists'}, status=400)
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Username already exists."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if User.objects.filter(email=email).exists():
-            return JsonResponse({'status': 'error', 'message': 'Email already registered'}, status=400)
+        if User.objects.filter(email=email).exists(): #Email Exists
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Email already registered."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            # --- Decode base64 face image ---
-            face_image_data = face_image_data.split(',')[1]
-            decoded_image = base64.b64decode(face_image_data)
-            face_image = ContentFile(decoded_image, name=f'{username}_face.jpg')
 
-            # --- Convert to image and detect face ---
-            np_array = np.frombuffer(decoded_image, np.uint8)
-            img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+            # Decode Base64 Image
+            image_string = face_image_data.split(",")[1]
+            decoded_image = base64.b64decode(image_string)
 
-            encodings = face_recognition.face_encodings(img)
-            if not encodings:
-                return JsonResponse({'status': 'error', 'message': 'No face detected'}, status=400)
+            face_image = ContentFile(
+                decoded_image,
+                name=f"{username}_face.jpg"
+            )
+
+            # Convert to RGB
+            image = Image.open(
+                io.BytesIO(decoded_image)
+            ).convert("RGB")
+
+            image = np.array(image)
+
+            # Face Encoding
+            encodings = face_recognition.face_encodings(image)
+
+            if len(encodings) == 0:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "No face detected."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             encoding = encodings[0].astype(np.float64).tobytes()
 
-            # --- Create User & Profile ---
-            user = User.objects.create_user(username=username, email=email, password=password1)
+            # Create User
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password1
+            )
+
+            # Create Profile
             Profile.objects.create(
                 user=user,
                 id_user=user.id,
@@ -538,60 +591,134 @@ def register(request):
                 face_encoding=encoding
             )
 
-            return JsonResponse({'status': 'success', 'message': 'Registered successfully', 'redirect': '/face_login/'})
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Registration successful."
+                },
+                status=status.HTTP_201_CREATED
+            )
 
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f'Registration failed: {e}'}, status=500)
 
-    return render(request, 'register.html')
+            return Response(
+                {
+                    "status": "error",
+                    "message": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 
-def face_login(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        face_image_data = request.POST.get("face_image")
+class FaceLoginAPIView(APIView):
+
+    permission_classes = []
+    def post(self, request):
+
+        username = request.data.get("username")
+        face_image_data = request.data.get("face_image")
 
         if not username or not face_image_data:
-            return JsonResponse({"status": "error", "message": "Username and face image are required"}, status=400)
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Username and face image are required"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             user = User.objects.get(username=username)
             profile = Profile.objects.get(user=user)
 
             if not profile.is_face_login_enabled:
-                return JsonResponse({"status": "error", "message": "Face login is disabled for this user."}, status=403)
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "Face login is disabled."
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
+            # Decode Base64 image
+            image_data = face_image_data.split(",")[1]
+            decoded_image = base64.b64decode(image_data)
 
-            # Decode and convert image
-            face_image_data = face_image_data.split(",")[1]
-            decoded_image = base64.b64decode(face_image_data)
-            np_array = np.frombuffer(decoded_image, np.uint8)
-            img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+            image = Image.open(io.BytesIO(decoded_image)).convert("RGB")
 
-            # Face encoding
-            encodings = face_recognition.face_encodings(img)
-            if not encodings:
-                return JsonResponse({"status": "error", "message": "No face detected"}, status=400)
+            image = np.array(image)
+
+            encodings = face_recognition.face_encodings(image)
+
+            if len(encodings) == 0:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "No face detected."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
             input_encoding = encodings[0]
-            stored_encoding = np.frombuffer(profile.face_encoding, dtype=np.float64)
 
-            matched = face_recognition.compare_faces([stored_encoding], input_encoding, tolerance=0.45)[0]
-            if matched:
-                login(request, user)
-                return JsonResponse({"status": "success", "message": f"Welcome {user.username}", "redirect": "/home/"})
-            else:
-                return JsonResponse({"status": "error", "message": "Face not recognized"}, status=401)
+            stored_encoding = np.frombuffer(
+                profile.face_encoding,
+                dtype=np.float64
+            )
+
+            matched = face_recognition.compare_faces(
+                [stored_encoding],
+                input_encoding,
+                tolerance=0.45
+            )[0]
+
+            if not matched:
+                return Response(
+                    {
+                        "status": "error",
+                        "message": "Face not recognized."
+                    },
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            login(request, user)
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": f"Welcome {user.username}",
+                    "username": user.username
+                },
+                status=status.HTTP_200_OK
+            )
 
         except User.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "User not found"}, status=404)
-        except Profile.DoesNotExist:
-            return JsonResponse({"status": "error", "message": "User profile not found"}, status=404)
-        except Exception as e:
-            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+            return Response(
+                {
+                    "status": "error",
+                    "message": "User not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-    return render(request, "login.html")  # For GET requests
+        except Profile.DoesNotExist:
+            return Response(
+                {
+                    "status": "error",
+                    "message": "Profile not found."
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "status": "error",
+                    "message": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )  # For GET requests
 
 
 # def password_login(request):

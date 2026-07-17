@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .views import TestAPIView
+from views import FaceLoginAPIView,RegisterAPIView
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -10,8 +11,8 @@ urlpatterns = [
     path('search/', views.search, name='search'),
     path('profile/<str:username>/', views.profile_view, name='profile_view'),
     path('like-post', views.like_post, name='like-post'),
-    path('register/', views.register, name='register'),
-    path('face_login/',views.face_login, name='face_login'),
+    path('api/register/', RegisterAPIView.as_view, name='register'),
+    path('api/login/face/', FaceLoginAPIView.as_view(), name='face_login'),
     path('password_login/', views.password_login, name='password_login'), #password login match
     path('about',views.about_us, name='about'),
     path('edit_profile/', views.edit_profile_view, name='edit_profile'),
