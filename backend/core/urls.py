@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from .views import TestAPIView
-from views import FaceLoginAPIView,RegisterAPIView
+from .views import FaceLoginAPIView, RegisterAPIView, LogoutAPIView
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -17,7 +17,7 @@ urlpatterns = [
     path('about',views.about_us, name='about'),
     path('edit_profile/', views.edit_profile_view, name='edit_profile'),
     path('create_post/', views.create_post_view, name='create_post'),
-    path('logout', views.logout_view, name='logout'),
+    path('api/logout', LogoutAPIView.as_view(), name='logout'),
     path('messages/', views.message_inbox, name='message_inbox'),
     path('messages/<int:conversation_id>/', views.conversation_detail, name='conversation_detail'),
     path('start_conversation/<int:user_id>/', views.start_conversation, name='start_conversation'),

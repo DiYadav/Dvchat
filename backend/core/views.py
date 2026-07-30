@@ -22,9 +22,11 @@ from .forms import ProfileUpdateForm, MessageForm
 from datetime import datetime, timedelta
 import base64
 import json
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from PIL import Image
 import io
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 
 @login_required(login_url='face_login')
@@ -753,10 +755,19 @@ def home_view(request): # Keep this one
     return render(request, 'home.html', {'username': request.user.username})
 
 
-@login_required
-def logout_view(request): # Keep this one, and use auth_logout
-    auth_logout(request) # Use the aliased logout function
-    return redirect('face_login')
+class LogoutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        logout(request)
+
+        return Response(
+            {
+                "status": "success",
+                "message": "Logged out successfully."
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 def about_us(request):
