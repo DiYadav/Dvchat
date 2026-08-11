@@ -34,24 +34,24 @@ class Message(models.Model):
 
 
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    id_user = models.IntegerField()
+# class Profile(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     id_user = models.IntegerField()
     
-    # Personal info
-    bio = models.TextField(blank=True)
-    location = models.CharField(max_length=100, blank=True)
+#     # Personal info
+#     bio = models.TextField(blank=True)
+#     location = models.CharField(max_length=100, blank=True)
 
-    # Profile image
-    profileimg = models.ImageField(upload_to='profile_images', default='blank-profile-picture.png')
+#     # Profile image
+#     profileimg = models.ImageField(upload_to='profile_images', default='blank-profile-picture.png')
     
-    # Face recognition fields
-    face_image = models.ImageField(upload_to="user_faces/", null=True, blank=True)
-    face_encoding = models.BinaryField(null=True, blank=True)
-    is_face_login_enabled = models.BooleanField(default=True)  # NEW field
+#     # Face recognition fields
+#     face_image = models.ImageField(upload_to="user_faces/", null=True, blank=True)
+#     face_encoding = models.BinaryField(null=True, blank=True)
+#     is_face_login_enabled = models.BooleanField(default=True)  # NEW field
 
-    def __str__(self):
-        return self.user.username
+#     def __str__(self):
+#         return self.user.username
 
 
 from django.db import models

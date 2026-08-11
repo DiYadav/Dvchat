@@ -48,6 +48,11 @@ INSTALLED_APPS = [
     'core',
     'chat',  
     "rest_framework_simplejwt.token_blacklist", 
+    "users",
+    "accounts",
+    "posts",
+    "notifications",
+    "chats",
 ]
 
 MIDDLEWARE = [
