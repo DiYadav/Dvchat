@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import api from "../api/axios";
 import FaceLogin from "../components/FaceLogin";
-
 import worldImage from "../assets/world.png";
+import { saveTokens } from "../auth/TokenService";
 
 function Login() {
   const navigate = useNavigate();
@@ -22,26 +21,35 @@ function Login() {
   const handlePasswordLogin = async () => {
     if (!username || !password) {
       setMessage("Enter username and password.");
-
       return;
     }
-
     try {
       setLoading(true);
+      setMessage("");
 
       const response = await api.post("/api/password-login/", {
         username,
         password,
       });
 
-      setMessage(response.data.message);
-
       if (response.data.status === "success") {
+        const { access, refresh } = response.data.data;
+
+        // Save JWT tokens
+        saveTokens(access, refresh);
+
+        setMessage(response.data.message);
+
         navigate("/home");
       }
     } catch (error) {
       if (error.response) {
-        setMessage(error.response.data.message);
+        const errors = error.response.data.errors;
+        if (errors) {
+          setMessage(Object.values(errors).flat().join(" "));
+        } else {
+          setMessage(error.response.data.message || "Login failed.");
+        }
       } else {
         setMessage("Unable to connect to server.");
       }
@@ -49,7 +57,6 @@ function Login() {
       setLoading(false);
     }
   };
-
   const handleFaceSuccess = () => {
     navigate("/home");
   };

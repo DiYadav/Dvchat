@@ -1,43 +1,120 @@
-import { useRef, useState } from "react";
-import Webcam from "react-webcam";
-import api from "../api/axios";
+import { useEffect, useRef, useState } from "react";
 
-function FaceLogin({ username, onSuccess, onBack }) {
-  const webcamRef = useRef(null);
+import axios from "../api/axios";
 
-  const [loading, setLoading] = useState(false);
+const FaceLogin = ({ username, onSuccess, onBack }) => {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const captureFace = async () => {
+  // -------------------------
+  // Start camera
+  // -------------------------
+
+  useEffect(() => {
+    let stream;
+
+    const startCamera = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error(error);
+
+        setMessage("Unable to access camera.");
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  // -------------------------
+  // Face Login
+  // -------------------------
+
+  const handleFaceLogin = async () => {
     if (!username) {
       setMessage("Please enter username first.");
+
       return;
     }
 
-    const imageSrc = webcamRef.current.getScreenshot();
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
 
-    if (!imageSrc) {
-      setMessage("Unable to capture image.");
+    if (!video || !canvas) {
+      return;
+    }
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setMessage("Camera is not ready.");
+
       return;
     }
 
     try {
       setLoading(true);
+      setMessage("");
 
-      const response = await api.post("/face-login/", {
+      // -------------------------
+      // Capture image
+      // -------------------------
+
+      canvas.width = video.videoWidth;
+
+      canvas.height = video.videoHeight;
+
+      const context = canvas.getContext("2d");
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const faceImage = canvas.toDataURL("image/jpeg");
+
+      // -------------------------
+      // API
+      // -------------------------
+
+      const response = await axios.post("/face-login/", {
         username,
-        face_image: imageSrc,
+        face_image: faceImage,
       });
 
-      setMessage(response.data.message);
+      // -------------------------
+      // JWT
+      // -------------------------
 
       if (response.data.status === "success") {
-        onSuccess(response.data);
+        const { access, refresh } = response.data;
+
+        localStorage.setItem("access_token", access);
+
+        localStorage.setItem("refresh_token", refresh);
+
+        localStorage.setItem("username", response.data.username);
+
+        setMessage(response.data.message);
+
+        // Tell Login.jsx
+        onSuccess();
       }
     } catch (error) {
+      console.error(error);
+
       if (error.response) {
-        setMessage(error.response.data.message);
+        setMessage(error.response.data.message || "Face login failed.");
       } else {
         setMessage("Unable to connect to server.");
       }
@@ -47,33 +124,35 @@ function FaceLogin({ username, onSuccess, onBack }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <Webcam
-        ref={webcamRef}
-        audio={false}
-        mirrored={true}
-        screenshotFormat="image/jpeg"
-        className="w-full h-56 rounded-xl object-cover border-2 border-gray-700"
+    <div className="space-y-4">
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        playsInline
+        className="w-full h-48 object-cover rounded border-2 border-gray-600"
       />
 
+      <canvas ref={canvasRef} className="hidden" />
+
       <button
-        onClick={captureFace}
+        onClick={handleFaceLogin}
         disabled={loading}
-        className="bg-pink-500 hover:bg-pink-600 text-white py-2 rounded"
+        className="w-full bg-blue-500 hover:bg-blue-600 py-3 rounded disabled:opacity-50"
       >
         {loading ? "Checking Face..." : "Login with Face"}
       </button>
 
       <button
         onClick={onBack}
-        className="bg-gray-700 hover:bg-gray-600 text-white py-2 rounded"
+        className="w-full bg-gray-700 hover:bg-gray-600 py-3 rounded"
       >
         Back to Password Login
       </button>
 
-      {message && <p className="text-center text-green-400">{message}</p>}
+      {message && <p className="text-center text-yellow-400">{message}</p>}
     </div>
   );
-}
+};
 
 export default FaceLogin;

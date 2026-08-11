@@ -18,6 +18,10 @@ const Register = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // -------------------------
+  // Start camera
+  // -------------------------
+
   useEffect(() => {
     startCamera();
 
@@ -35,11 +39,15 @@ const Register = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.error(error);
       setMessage("Unable to access camera.");
     }
   };
+
+  // -------------------------
+  // Stop camera
+  // -------------------------
 
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
@@ -47,18 +55,29 @@ const Register = () => {
     }
   };
 
+  // -------------------------
+  // Capture face
+  // -------------------------
+
   const captureFace = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
-    if (!video || !canvas) return;
+    if (!video || !canvas) {
+      return;
+    }
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setMessage("Camera is not ready.");
+      return;
+    }
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext("2d");
+    const context = canvas.getContext("2d");
 
-    ctx.drawImage(video, 0, 0);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const image = canvas.toDataURL("image/jpeg");
 
@@ -67,17 +86,26 @@ const Register = () => {
     setMessage("Face captured successfully.");
   };
 
+  // -------------------------
+  // Register
+  // -------------------------
+
   const handleRegister = async () => {
+    setMessage("");
+
+    // Required fields
     if (!username || !email || !password1 || !password2) {
       setMessage("All fields are required.");
       return;
     }
 
+    // Password match
     if (password1 !== password2) {
       setMessage("Passwords do not match.");
       return;
     }
 
+    // Face required
     if (!capturedImage) {
       setMessage("Please capture your face.");
       return;
@@ -87,24 +115,38 @@ const Register = () => {
       setLoading(true);
 
       const response = await axios.post("/register/", {
-        username,
-        email,
-        password1,
-        password2,
+        username: username,
+        email: email,
+        password1: password1,
+        password2: password2,
         face_image: capturedImage,
       });
 
-      setMessage(response.data.message);
+      console.log("Register response:", response.data);
 
-      stopCamera();
+      // -------------------------
+      // Success
+      // -------------------------
 
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
+      if (response.data.status === "success") {
+        setMessage(response.data.message || "Registration successful.");
+
+        stopCamera();
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
+      } else {
+        setMessage(response.data.message || "Registration failed.");
+      }
     } catch (error) {
-      console.log(error);
+      console.error("Registration error:", error);
 
-      setMessage(error.response?.data?.message || "Registration failed.");
+      if (error.response) {
+        setMessage(error.response.data.message || "Registration failed.");
+      } else {
+        setMessage("Unable to connect to server.");
+      }
     } finally {
       setLoading(false);
     }
@@ -113,6 +155,8 @@ const Register = () => {
   return (
     <div className="bg-black min-h-screen flex items-center justify-center">
       <div className="flex bg-black text-white rounded-lg shadow-lg max-w-5xl w-full p-4">
+        {/* Left Image */}
+
         <div className="hidden lg:block w-1/2">
           <img
             src="/images/insta_mock.jpg"
@@ -121,8 +165,12 @@ const Register = () => {
           />
         </div>
 
+        {/* Right Form */}
+
         <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-8 space-y-5">
           <h1 className="text-4xl font-bold text-center">DVCHAT</h1>
+
+          {/* Username */}
 
           <input
             type="text"
@@ -132,6 +180,8 @@ const Register = () => {
             onChange={(e) => setUsername(e.target.value)}
           />
 
+          {/* Email */}
+
           <input
             type="email"
             placeholder="Email"
@@ -139,6 +189,8 @@ const Register = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
+
+          {/* Password */}
 
           <input
             type="password"
@@ -148,6 +200,8 @@ const Register = () => {
             onChange={(e) => setPassword1(e.target.value)}
           />
 
+          {/* Confirm Password */}
+
           <input
             type="password"
             placeholder="Confirm Password"
@@ -155,6 +209,8 @@ const Register = () => {
             value={password2}
             onChange={(e) => setPassword2(e.target.value)}
           />
+
+          {/* Camera */}
 
           <video
             ref={videoRef}
@@ -164,33 +220,51 @@ const Register = () => {
             className="w-full h-48 rounded border-2 border-gray-600 object-cover"
           />
 
+          {/* Hidden Canvas */}
+
           <canvas ref={canvasRef} className="hidden" />
+
+          {/* Buttons */}
+
           <div className="flex gap-4">
             <button
+              type="button"
               onClick={captureFace}
-              className="w-1/2 bg-white text-black py-2 rounded hover:bg-gray-200"
+              disabled={loading}
+              className="w-1/2 bg-white text-black py-2 rounded hover:bg-gray-200 disabled:opacity-50"
             >
               Capture Face
             </button>
 
             <button
+              type="button"
               onClick={handleRegister}
               disabled={loading}
-              className="w-1/2 bg-blue-600 py-2 rounded hover:bg-blue-700"
+              className="w-1/2 bg-blue-600 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? "Registering..." : "Register"}
             </button>
           </div>
 
+          {/* Captured Image */}
+
           {capturedImage && (
-            <img
-              src={capturedImage}
-              alt="Captured Face"
-              className="rounded-lg border border-gray-700"
-            />
+            <div>
+              <p className="text-sm text-gray-400 mb-2">Captured Face</p>
+
+              <img
+                src={capturedImage}
+                alt="Captured Face"
+                className="w-full rounded-lg border border-gray-700"
+              />
+            </div>
           )}
 
+          {/* Message */}
+
           {message && <p className="text-center text-red-400">{message}</p>}
+
+          {/* Login */}
 
           <p className="text-center">
             Already have an account?{" "}
