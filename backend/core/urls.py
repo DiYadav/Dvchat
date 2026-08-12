@@ -11,7 +11,6 @@
 #     path('search/', views.search, name='search'),
 #     path('profile/<str:username>/', views.profile_view, name='profile_view'),
 #     path('like-post', views.like_post, name='like-post'),
-#     path('api/register/', RegisterAPIView.as_view, name='register'),
 #     path('api/login/face/', FaceLoginAPIView.as_view(), name='face_login'),
 #     path('password_login/', views.password_login, name='password_login'), #password login match
 #     path('about',views.about_us, name='about'),
