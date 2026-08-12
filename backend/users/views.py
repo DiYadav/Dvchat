@@ -17,10 +17,13 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 from accounts.models import Profile
 User = get_user_model()
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 
 
 class LoginAPIView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -42,11 +45,13 @@ class LoginAPIView(APIView):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-
+@method_decorator(csrf_exempt, name="dispatch")
 class RegisterAPIView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
+        print("REGISTER API CALLED")
         username = request.data.get("username")
         email = request.data.get("email")
         password1 = request.data.get("password1")
@@ -89,35 +94,53 @@ class RegisterAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
-            if "," in face_image_data:   # Decode Base64 image
-                image_string = face_image_data.split(",",1)[1]
-            else:
-                image_string = face_image_data
+            user = User.objects.create_user(username=username,email=email,password=password1) # Create user first 
+            profile_data = {"user": user,"id_user": user.id,"is_face_login_enabled": False,}   # Default profile values
+            # Face is OPTIONAL
+            if face_image_data:
+                # Remove Base64 header if present
+                if "," in face_image_data:
+                    image_string = face_image_data.split(",", 1)[1]
+                else:
+                    image_string = face_image_data
+                # Decode image
+                decoded_image = base64.b64decode(image_string)
+                image = Image.open(io.BytesIO(decoded_image)).convert("RGB")   # Open image
+                image = np.array(image)
+                encodings = face_recognition.face_encodings(image)  # Detect face
+                if len(encodings) == 0:
+                    user.delete()
+                    return Response(
+                        {
+                            "status": "error",
+                            "message": "No face detected."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                encoding = encodings[0].astype(np.float64).tobytes() # Store face encoding
+                # Store face image
+                face_image = ContentFile(decoded_image,name=f"{username}_face.jpg")
+                profile_data["face_image"] = face_image
+                profile_data["face_encoding"] = encoding
+                profile_data["is_face_login_enabled"] = True
 
-            decoded_image = base64.b64decode(image_string)
-            face_image = ContentFile(decoded_image,name=f"{username}_face.jpg")   # Create image file
-            image = Image.open(io.BytesIO(decoded_image)).convert("RGB")  # Convert image
-            image = np.array(image)
-            encodings = face_recognition.face_encodings(image)    # Detect face
-            if len(encodings) == 0:
-                return Response(
-                    {
-                        "status": "error",
-                        "message": "No face detected."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            encoding = ( encodings[0].astype(np.float64).tobytes())    # Store face encoding
-            user = User.objects.create_user(username=username,email=email,password=password1)   # Create User
-            Profile.objects.create(user=user,id_user=user.id,face_image=face_image,face_encoding=encoding) # Create Profile
+            Profile.objects.create(**profile_data)  # Create profile
             return Response(
                 {
                     "status": "success",
-                    "message": "Registration successful."
+                    "message": "Registration successful.",
+                    "face_login_enabled": profile_data[
+                        "is_face_login_enabled"
+                    ]
                 },
                 status=status.HTTP_201_CREATED
             )
         except Exception as e:
+            # If something fails after creating user,
+            # don't leave an incomplete user.
+            if "user" in locals() and user.pk:
+                user.delete()
+
             return Response(
                 {
                     "status": "error",
@@ -142,6 +165,7 @@ class LogoutAPIView(APIView):
 
 
 class FaceLoginAPIView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):

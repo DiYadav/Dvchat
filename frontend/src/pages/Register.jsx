@@ -17,12 +17,8 @@ const Register = () => {
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // -------------------------
-  // Start camera
-  // -------------------------
-
-  useEffect(() => {
+// Start camera
+ useEffect(() => {
     startCamera();
 
     return () => {
@@ -44,22 +40,14 @@ const Register = () => {
       setMessage("Unable to access camera.");
     }
   };
-
-  // -------------------------
-  // Stop camera
-  // -------------------------
-
+// Stop camera
   const stopCamera = () => {
     if (videoRef.current?.srcObject) {
       videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
     }
   };
-
-  // -------------------------
   // Capture face
-  // -------------------------
-
-  const captureFace = () => {
+    const captureFace = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
@@ -74,23 +62,14 @@ const Register = () => {
 
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-
     const context = canvas.getContext("2d");
-
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
     const image = canvas.toDataURL("image/jpeg");
-
     setCapturedImage(image);
-
     setMessage("Face captured successfully.");
   };
-
-  // -------------------------
-  // Register
-  // -------------------------
-
-  const handleRegister = async () => {
+    // Register
+   const handleRegister = async () => {
     setMessage("");
 
     // Required fields
@@ -104,13 +83,6 @@ const Register = () => {
       setMessage("Passwords do not match.");
       return;
     }
-
-    // Face required
-    if (!capturedImage) {
-      setMessage("Please capture your face.");
-      return;
-    }
-
     try {
       setLoading(true);
 
@@ -119,20 +91,15 @@ const Register = () => {
         email: email,
         password1: password1,
         password2: password2,
-        face_image: capturedImage,
+        face_image: capturedImage || null,
       });
 
       console.log("Register response:", response.data);
-
-      // -------------------------
-      // Success
-      // -------------------------
 
       if (response.data.status === "success") {
         setMessage(response.data.message || "Registration successful.");
 
         stopCamera();
-
         setTimeout(() => {
           navigate("/login");
         }, 1500);
@@ -220,11 +187,7 @@ const Register = () => {
             className="w-full h-48 rounded border-2 border-gray-600 object-cover"
           />
 
-          {/* Hidden Canvas */}
-
           <canvas ref={canvasRef} className="hidden" />
-
-          {/* Buttons */}
 
           <div className="flex gap-4">
             <button
@@ -245,8 +208,6 @@ const Register = () => {
               {loading ? "Registering..." : "Register"}
             </button>
           </div>
-
-          {/* Captured Image */}
 
           {capturedImage && (
             <div>
