@@ -1,116 +1,77 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "../api/axios";
 
-const Register = () => {
+import api from "../api/axios";
+
+function Register() {
   const navigate = useNavigate();
-
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
 
-  const [capturedImage, setCapturedImage] = useState("");
-
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-// Start camera
- useEffect(() => {
-    startCamera();
 
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (error) {
-      console.error(error);
-      setMessage("Unable to access camera.");
-    }
-  };
-// Stop camera
-  const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
-    }
-  };
-  // Capture face
-    const captureFace = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (!video || !canvas) {
-      return;
-    }
-
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      setMessage("Camera is not ready.");
-      return;
-    }
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const image = canvas.toDataURL("image/jpeg");
-    setCapturedImage(image);
-    setMessage("Face captured successfully.");
-  };
-    // Register
-   const handleRegister = async () => {
+  const handleRegister = async () => {
     setMessage("");
 
-    // Required fields
     if (!username || !email || !password1 || !password2) {
       setMessage("All fields are required.");
       return;
     }
 
-    // Password match
     if (password1 !== password2) {
       setMessage("Passwords do not match.");
       return;
     }
+
     try {
       setLoading(true);
 
-      const response = await axios.post("/register/", {
-        username: username,
-        email: email,
-        password1: password1,
-        password2: password2,
-        face_image: capturedImage || null,
+      const response = await api.post("/users/register/", {
+        username,
+        email,
+        password1,
+        password2,
       });
 
-      console.log("Register response:", response.data);
-
       if (response.data.status === "success") {
-        setMessage(response.data.message || "Registration successful.");
+        setMessage(
+          response.data.message || "Registration successful."
+        );
 
-        stopCamera();
+        setUsername("");
+        setEmail("");
+        setPassword1("");
+        setPassword2("");
+
         setTimeout(() => {
           navigate("/login");
         }, 1500);
       } else {
-        setMessage(response.data.message || "Registration failed.");
+        setMessage(
+          response.data.message || "Registration failed."
+        );
       }
     } catch (error) {
       console.error("Registration error:", error);
 
       if (error.response) {
-        setMessage(error.response.data.message || "Registration failed.");
+        const errors = error.response.data.errors;
+
+        if (errors) {
+          setMessage(
+            Object.values(errors).flat().join(" ")
+          );
+        } else {
+          setMessage(
+            error.response.data.message ||
+              "Registration failed."
+          );
+        }
       } else {
         setMessage("Unable to connect to server.");
       }
@@ -120,123 +81,276 @@ const Register = () => {
   };
 
   return (
-    <div className="bg-black min-h-screen flex items-center justify-center">
-      <div className="flex bg-black text-white rounded-lg shadow-lg max-w-5xl w-full p-4">
-        {/* Left Image */}
+    <div className="min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#2f1028] via-[#0b141c] to-[#16241f] relative">
 
-        <div className="hidden lg:block w-1/2">
-          <img
-            src="/images/insta_mock.jpg"
-            alt="register"
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
+      {/* Ambient glow, matched to the teal that bleeds through the corners in the reference image */}
+      <div className="absolute -left-24 bottom-0 w-96 h-96 rounded-full bg-teal-400/10 blur-3xl" />
+      <div className="absolute -right-24 top-0 w-96 h-96 rounded-full bg-teal-400/10 blur-3xl" />
 
-        {/* Right Form */}
+      {/* Decorative background */}
+      <div className="absolute -left-32 -bottom-32 w-80 h-80 rotate-45 border border-teal-400/20" />
 
-        <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-8 space-y-5">
-          <h1 className="text-4xl font-bold text-center">DVCHAT</h1>
+      <div className="absolute -right-32 -top-32 w-80 h-80 rotate-45 border border-teal-400/20" />
 
-          {/* Username */}
+      <div className="absolute left-10 top-20 w-32 h-32 rotate-45 border border-teal-400/10" />
+
+      <div className="absolute right-20 bottom-20 w-40 h-40 rotate-45 border border-teal-400/10" />
+
+      {/* Register Card */}
+      <div
+        className="
+          relative
+          z-10
+          w-[380px]
+          px-8
+          py-7
+          rounded-sm
+          bg-gradient-to-b
+          from-[#8fe3d6]/60
+          to-[#173f3a]/50
+          backdrop-blur-md
+          shadow-[0_20px_50px_rgba(0,0,0,0.45)]
+        "
+      >
+
+        {/* Title */}
+        <h1
+          className="
+            text-center
+            text-[#2f7d76]
+            text-lg
+            font-medium
+            tracking-[3px]
+            mb-7
+          "
+        >
+          MEMBER REGISTER
+        </h1>
+
+        {/* Username */}
+        <div
+          className="
+            flex
+            items-center
+            h-[42px]
+            mb-3
+            bg-[#0f4146]/80
+          "
+        >
+          <div
+            className="
+              w-[42px]
+              h-full
+              flex
+              items-center
+              justify-center
+              text-white
+            "
+          >
+            👤
+          </div>
 
           <input
             type="text"
             placeholder="Username"
-            className="w-full p-3 rounded bg-gray-800"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            className="
+              flex-1
+              h-full
+              bg-transparent
+              outline-none
+              border-none
+              text-white
+              text-xs
+              px-2
+              placeholder:text-white/40
+            "
           />
+        </div>
 
-          {/* Email */}
+        {/* Email */}
+        <div
+          className="
+            flex
+            items-center
+            h-[42px]
+            mb-3
+            bg-[#0f4146]/80
+          "
+        >
+          <div
+            className="
+              w-[42px]
+              h-full
+              flex
+              items-center
+              justify-center
+              text-white
+            "
+          >
+            ✉
+          </div>
 
           <input
             type="email"
             placeholder="Email"
-            className="w-full p-3 rounded bg-gray-800"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="
+              flex-1
+              h-full
+              bg-transparent
+              outline-none
+              border-none
+              text-white
+              text-xs
+              px-2
+              placeholder:text-white/40
+            "
           />
+        </div>
 
-          {/* Password */}
+        {/* Password */}
+        <div
+          className="
+            flex
+            items-center
+            h-[42px]
+            mb-3
+            bg-[#0f4146]/80
+          "
+        >
+          <div
+            className="
+              w-[42px]
+              h-full
+              flex
+              items-center
+              justify-center
+              text-white
+            "
+          >
+            🔒
+          </div>
 
           <input
             type="password"
             placeholder="Password"
-            className="w-full p-3 rounded bg-gray-800"
             value={password1}
             onChange={(e) => setPassword1(e.target.value)}
+            className="
+              flex-1
+              h-full
+              bg-transparent
+              outline-none
+              border-none
+              text-white
+              text-xs
+              px-2
+              placeholder:text-white/40
+            "
           />
+        </div>
 
-          {/* Confirm Password */}
+        {/* Confirm Password */}
+        <div
+          className="
+            flex
+            items-center
+            h-[42px]
+            mb-4
+            bg-[#0f4146]/80
+          "
+        >
+          <div
+            className="
+              w-[42px]
+              h-full
+              flex
+              items-center
+              justify-center
+              text-white
+            "
+          >
+            🔒
+          </div>
 
           <input
             type="password"
             placeholder="Confirm Password"
-            className="w-full p-3 rounded bg-gray-800"
             value={password2}
             onChange={(e) => setPassword2(e.target.value)}
+            className="
+              flex-1
+              h-full
+              bg-transparent
+              outline-none
+              border-none
+              text-white
+              text-xs
+              px-2
+              placeholder:text-white/40
+            "
           />
-
-          {/* Camera */}
-
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-48 rounded border-2 border-gray-600 object-cover"
-          />
-
-          <canvas ref={canvasRef} className="hidden" />
-
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={captureFace}
-              disabled={loading}
-              className="w-1/2 bg-white text-black py-2 rounded hover:bg-gray-200 disabled:opacity-50"
-            >
-              Capture Face
-            </button>
-
-            <button
-              type="button"
-              onClick={handleRegister}
-              disabled={loading}
-              className="w-1/2 bg-blue-600 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? "Registering..." : "Register"}
-            </button>
-          </div>
-
-          {capturedImage && (
-            <div>
-              <p className="text-sm text-gray-400 mb-2">Captured Face</p>
-
-              <img
-                src={capturedImage}
-                alt="Captured Face"
-                className="w-full rounded-lg border border-gray-700"
-              />
-            </div>
-          )}
-
-          {/* Message */}
-
-          {message && <p className="text-center text-red-400">{message}</p>}
-
-          {/* Login */}
-
-          <p className="text-center">
-            Already have an account?{" "}
-            <Link to="/login" className="text-blue-500 hover:underline">
-              Login
-            </Link>
-          </p>
         </div>
+
+        {/* Register button */}
+        <button
+          onClick={handleRegister}
+          disabled={loading}
+          className="
+            w-full
+            h-[42px]
+            bg-[#12c9a6]
+            hover:bg-[#20dfbc]
+            text-[#063b39]
+            text-xs
+            font-semibold
+            tracking-[1px]
+            transition
+            disabled:opacity-50
+            disabled:cursor-not-allowed
+          "
+        >
+          {loading ? "REGISTERING..." : "REGISTER"}
+        </button>
+
+        {/* Message */}
+        {message && (
+          <p className="text-center text-white text-xs mt-4">
+            {message}
+          </p>
+        )}
+
+        {/* Divider */}
+        <div className="h-px w-full bg-white/25 my-6" />
+
+        {/* Login */}
+        <p className="text-center text-white/60 text-[11px] mb-2">
+          Already have an account?
+        </p>
+
+        <Link
+          to="/login"
+          className="
+            block
+            text-center
+            text-[#12c9a6]
+            hover:text-[#20dfbc]
+            text-xs
+            font-semibold
+            tracking-[1px]
+            no-underline
+            transition
+          "
+        >
+          LOGIN
+        </Link>
+
       </div>
     </div>
   );
-};
+}
 
 export default Register;
