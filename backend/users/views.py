@@ -95,7 +95,7 @@ class RegisterAPIView(APIView):
             )
         try:
             user = User.objects.create_user(username=username,email=email,password=password1) # Create user first 
-            profile_data = {"user": user,"id_user": user.id,"is_face_login_enabled": False,}   # Default profile values
+            profile_data = {"user": user,"is_face_login_enabled": False,}   # Default profile values
             # Face is OPTIONAL
             if face_image_data:
                 # Remove Base64 header if present
