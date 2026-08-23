@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Profile(models.Model):
@@ -13,3 +14,24 @@ class Profile(models.Model):
     
     def __str__(self):
         return self.user.username
+
+
+class Follow(models.Model):
+    follower=models.ForeignKey(settings.AUTH_USER_MODEL, related_name='following_set', on_delete=models.CASCADE)
+    following=models.ForeignKey(settings.AUTH_USER_MODEL, related_name='follower_set', on_delete=models.CASCADE)
+    created_at=models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints=[
+            models.UniqueConstraint(
+                fields=['follower', 'following'],
+                name='unique_followers'
+            ),
+            models.CheckConstraint(
+            check=~models.Q(follower=models.F("following")),
+            name="prevent_self_follow"
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.follower} follows {self.following}"
