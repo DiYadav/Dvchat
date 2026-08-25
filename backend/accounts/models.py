@@ -39,7 +39,7 @@ class Follow(models.Model):
 
 class Post(models.Model):
     author = models.ForeignKey(User, related_name='posts',on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='post_images')
+    #image = models.ImageField(upload_to='post_images')
     caption= models.TextField()
     likes=models.ManyToManyField(User, related_name='liked_post', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

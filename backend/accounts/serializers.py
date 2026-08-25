@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import Profile
 from rest_framework import serializers
-from .models import Profile
+from .models import Profile, Follow, Post, PostImage
 
 
 class MyProfileSerializer(serializers.ModelSerializer):
@@ -12,3 +12,68 @@ class MyProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ["id","username","email","bio","location","profileimg","is_face_login_enabled",]
         read_only_fields = ["id","username","email",]
+
+class FollowSerializer(serializers.ModelSerializer):
+    follower = serializers.ReadOnlyField(source="follower.username")
+
+    class Meta:
+        model = Follow
+        fields = ["id", "follower", "following", "created_at"]
+        read_only_fields = ["id", "follower", "created_at"]
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        following = attrs.get("following")
+
+        if request.user == following:
+            raise serializers.ValidationError("You cannot follow yourself.")
+
+        if Follow.objects.filter(follower=request.user,following=following).exists():
+            raise serializers.ValidationError("You are already following this user.")
+        return attrs
+
+    def create(self, validated_data):
+        return Follow.objects.create(follower=self.context["request"].user,**validated_data)
+
+
+class PostImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostImage
+        fields = ["id", "image", "created_at"]
+        read_only_fields = ["id", "created_at"]
+
+
+class PostSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source="author.username")
+    likes_count = serializers.IntegerField(source="likes.count",read_only=True)
+    images = PostImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            "id",
+            "author",
+            "image",
+            "caption",
+            "likes",
+            "likes_count",
+            "images",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "author",
+            "likes",
+            "likes_count",
+            "images",
+            "created_at",
+            "updated_at",
+        ]
+
+
+class PostCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ["id", "image", "caption"]
+        read_only_fields = ["id"]
