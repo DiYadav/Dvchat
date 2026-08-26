@@ -1,6 +1,5 @@
 from django.urls import path
-from .views import MyProfileAPIView,FollowAPIView, UnfollowAPIView,PostListCreateAPIView,PostDetailAPIView, LikePostAPIView, UnlikePostAPIView
-
+from .views import MyProfileAPIView,FollowAPIView, UnfollowAPIView,PostListCreateAPIView,PostDetailAPIView, LikePostAPIView, UnlikePostAPIView, PostImageCreateAPIView
 
 
 urlpatterns = [
@@ -11,4 +10,5 @@ urlpatterns = [
     path("posts/<int:post_id>/",PostDetailAPIView.as_view(),name="post-detail"),
     path("posts/<int:post_id>/like/",LikePostAPIView.as_view(),name="like-post"),
     path("posts/<int:post_id>/unlike/",UnlikePostAPIView.as_view(),name="unlike-post"),
+    path("posts/<int:post_id>/images/",PostImageCreateAPIView.as_view(),name="post-image-create"),
 ]

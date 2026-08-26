@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from .models import Profile
-from rest_framework import serializers
 from .models import Profile, Follow, Post, PostImage
+from rest_framework import serializers
 
 
 class MyProfileSerializer(serializers.ModelSerializer):
@@ -53,7 +52,6 @@ class PostSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "author",
-            "image",
             "caption",
             "likes",
             "likes_count",
@@ -75,5 +73,5 @@ class PostSerializer(serializers.ModelSerializer):
 class PostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ["id", "image", "caption"]
+        fields = ["id", "caption"]
         read_only_fields = ["id"]

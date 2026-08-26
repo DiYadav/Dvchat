@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Profile, Post
-from .serializers import MyProfileSerializer
+from .serializers import MyProfileSerializer, PostImageSerializer
 
 
 class MyProfileAPIView(APIView):
@@ -270,3 +270,18 @@ class UnlikePostAPIView(APIView):
 
         post.likes.remove(request.user)
         return Response({"detail": "Post unliked successfully."},status=status.HTTP_204_NO_CONTENT)
+
+
+class PostImageCreateAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, post_id):
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found."},status=status.HTTP_404_NOT_FOUND)
+        serializer = PostImageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(post=post)
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
