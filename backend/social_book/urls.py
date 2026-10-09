@@ -24,6 +24,7 @@ urlpatterns = [
     # path('', include('core.urls')),
     path('api/users/', include('users.urls')),
     path('api/accounts/', include('accounts.urls')),
+    path('api/posts/', include('posts.urls')),
 ]
 
 urlpatterns = urlpatterns+static(settings.MEDIA_URL,
