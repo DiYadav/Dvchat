@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     "channels",
     'widget_tweaks',
     
-    'core',
+    
     'chat',  
     "rest_framework_simplejwt.token_blacklist", 
     "users",
