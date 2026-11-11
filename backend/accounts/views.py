@@ -18,12 +18,20 @@ from .serializers import (
     MyProfileSerializer,
     FaceSettingsSerializer,
     FollowSerializer,
+    FollowRequestSerializer,
     UserCardSerializer,
     PostSerializer,
     PostCreateSerializer,
     PostImageSerializer,
     CommentSerializer,
+    ReplySerializer,
+    make_absolute_url,
 )
+
+try:
+    from notifications.models import Notification
+except ImportError:
+    Notification = None
 
 
 class MyProfileAPIView(APIView):
@@ -64,13 +72,6 @@ class MyProfileAPIView(APIView):
 
 
 class FaceSettingsAPIView(APIView):
-    """
-    Account settings endpoint to manage face recognition authentication:
-    - GET: check if face is registered & if face login is enabled
-    - POST: enroll or re-enroll face with base64 image capture
-    - PATCH: toggle face login on/off
-    - DELETE: delete registered face data
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -113,7 +114,6 @@ class FaceSettingsAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Store 128-d face encoding vector as binary bytes
             encoding_bytes = encodings[0].astype(np.float64).tobytes()
             profile.face_encoding = encoding_bytes
             profile.face_image = ContentFile(decoded_image, name=f"{request.user.username}_face.jpg")
@@ -194,18 +194,42 @@ class UserProfileDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, username):
-        try:
-            target_user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        clean_user = username.strip() if username else ""
+        if clean_user.lower() == "me" or clean_user.lower() == request.user.username.lower():
+            target_user = request.user
+        else:
+            target_user = User.objects.filter(username__iexact=clean_user).first()
+            if not target_user:
+                return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
         profile, _ = Profile.objects.get_or_create(user=target_user)
-        is_following = Follow.objects.filter(follower=request.user, following=target_user).exists()
-        followers_count = target_user.follower_set.count()
-        following_count = target_user.following_set.count()
 
-        posts = Post.objects.filter(author=target_user)
+        # Follow relationship from request.user to target_user
+        my_rel = Follow.objects.filter(follower=request.user, following=target_user).first()
+        follow_status = my_rel.status if my_rel else "none"  # 'none' | 'pending' | 'accepted'
+
+        # Incoming pending follow invitation from target_user to request.user
+        incoming_invitation = Follow.objects.filter(
+            follower=target_user, following=request.user, status="pending"
+        ).first()
+
+        # Follow back opportunity
+        they_follow_me = Follow.objects.filter(
+            follower=target_user, following=request.user, status="accepted"
+        ).exists()
+        can_follow_back = they_follow_me and (follow_status == "none")
+
+        followers_count = target_user.follower_set.filter(status="accepted").count()
+        following_count = target_user.following_set.filter(status="accepted").count()
+
+        posts = Post.objects.filter(author=target_user).order_by("-created_at")
         posts_data = PostSerializer(posts, many=True, context={"request": request}).data
+
+        profileimg = (
+            make_absolute_url(request, profile.profileimg.url)
+            if profile.profileimg
+            else make_absolute_url(request, "/media/blank-profile-picture.png")
+        )
 
         return Response(
             {
@@ -215,8 +239,11 @@ class UserProfileDetailAPIView(APIView):
                     "username": target_user.username,
                     "bio": profile.bio,
                     "location": profile.location,
-                    "profileimg": profile.profileimg.url if profile.profileimg else "/media/blank-profile-picture.png",
-                    "is_following": is_following,
+                    "profileimg": profileimg,
+                    "is_following": follow_status == "accepted",
+                    "follow_status": follow_status,  # 'none', 'pending', 'accepted'
+                    "has_incoming_invitation": bool(incoming_invitation),
+                    "can_follow_back": can_follow_back,
                     "is_self": target_user == request.user,
                     "followers_count": followers_count,
                     "following_count": following_count,
@@ -228,6 +255,9 @@ class UserProfileDetailAPIView(APIView):
 
 
 class FollowAPIView(APIView):
+    """
+    Sends a follow invitation. Defaults to status='pending'.
+    """
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -243,18 +273,108 @@ class FollowAPIView(APIView):
         if target_user == request.user:
             return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
 
-        follow, created = Follow.objects.get_or_create(follower=request.user, following=target_user)
-        if not created:
-            return Response({"detail": "You are already following this user."}, status=status.HTTP_400_BAD_REQUEST)
+        follow, created = Follow.objects.get_or_create(
+            follower=request.user,
+            following=target_user,
+            defaults={"status": "pending"}
+        )
+
+        if not created and follow.status == "accepted":
+            return Response(
+                {"detail": "You are already following this user.", "follow_status": "accepted"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if Notification:
+            try:
+                Notification.objects.create(
+                    recipient=target_user,
+                    sender=request.user,
+                    notification_type="follow",
+                    text="sent you a follow invitation.",
+                )
+            except Exception:
+                pass
 
         return Response(
             {
                 "status": "success",
-                "message": f"You are now following {target_user.username}.",
-                "data": {"is_following": True, "followers_count": target_user.follower_set.count()},
+                "message": f"Follow invitation sent to {target_user.username}.",
+                "data": {
+                    "follow_status": follow.status,
+                    "is_following": follow.status == "accepted",
+                    "followers_count": target_user.follower_set.filter(status="accepted").count(),
+                },
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class AcceptFollowAPIView(APIView):
+    """
+    Accepts an incoming follow invitation from user_id.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        follow = Follow.objects.filter(follower_id=user_id, following=request.user, status="pending").first()
+        if not follow:
+            return Response({"detail": "No pending follow invitation found from this user."}, status=status.HTTP_404_NOT_FOUND)
+
+        follow.status = "accepted"
+        follow.save()
+
+        if Notification:
+            try:
+                Notification.objects.create(
+                    recipient=follow.follower,
+                    sender=request.user,
+                    notification_type="follow",
+                    text="accepted your follow invitation.",
+                )
+            except Exception:
+                pass
+
+        i_follow_them = Follow.objects.filter(follower=request.user, following_id=user_id, status="accepted").exists()
+
+        return Response(
+            {
+                "status": "success",
+                "message": f"You accepted @{follow.follower.username}'s follow invitation.",
+                "data": {
+                    "can_follow_back": not i_follow_them,
+                    "followers_count": request.user.follower_set.filter(status="accepted").count(),
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class DeclineFollowAPIView(APIView):
+    """
+    Declines an incoming follow invitation from user_id.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        follow = Follow.objects.filter(follower_id=user_id, following=request.user, status="pending").first()
+        if not follow:
+            return Response({"detail": "No pending follow invitation found."}, status=status.HTTP_404_NOT_FOUND)
+
+        follow.delete()
+        return Response({"status": "success", "message": "Follow invitation declined."}, status=status.HTTP_200_OK)
+
+
+class FollowRequestsListView(APIView):
+    """
+    Returns pending follow invitations received by the current user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        pending_requests = Follow.objects.filter(following=request.user, status="pending")
+        serializer = FollowRequestSerializer(pending_requests, many=True, context={"request": request})
+        return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 class UnfollowAPIView(APIView):
@@ -267,13 +387,13 @@ class UnfollowAPIView(APIView):
 
         follow.delete()
         target_user = User.objects.filter(id=user_id).first()
-        followers_count = target_user.follower_set.count() if target_user else 0
+        followers_count = target_user.follower_set.filter(status="accepted").count() if target_user else 0
 
         return Response(
             {
                 "status": "success",
                 "message": "User unfollowed successfully.",
-                "data": {"is_following": False, "followers_count": followers_count},
+                "data": {"is_following": False, "follow_status": "none", "followers_count": followers_count},
             },
             status=status.HTTP_200_OK,
         )
@@ -289,13 +409,13 @@ class UnfollowAPIView(APIView):
 
         follow.delete()
         target_user = User.objects.filter(id=target_id).first()
-        followers_count = target_user.follower_set.count() if target_user else 0
+        followers_count = target_user.follower_set.filter(status="accepted").count() if target_user else 0
 
         return Response(
             {
                 "status": "success",
                 "message": "User unfollowed successfully.",
-                "data": {"is_following": False, "followers_count": followers_count},
+                "data": {"is_following": False, "follow_status": "none", "followers_count": followers_count},
             },
             status=status.HTTP_200_OK,
         )
@@ -305,7 +425,7 @@ class FollowersListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        follower_users = User.objects.filter(following_set__following=request.user)
+        follower_users = User.objects.filter(following_set__following=request.user, following_set__status="accepted")
         serializer = UserCardSerializer(follower_users, many=True, context={"request": request})
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -314,7 +434,7 @@ class FollowingListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        following_users = User.objects.filter(follower_set__follower=request.user)
+        following_users = User.objects.filter(follower_set__follower=request.user, follower_set__status="accepted")
         serializer = UserCardSerializer(following_users, many=True, context={"request": request})
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -351,7 +471,9 @@ class PostListCreateAPIView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
-        following_ids = list(Follow.objects.filter(follower=request.user).values_list("following_id", flat=True))
+        following_ids = list(
+            Follow.objects.filter(follower=request.user, status="accepted").values_list("following_id", flat=True)
+        )
         following_ids.append(request.user.id)
 
         posts = Post.objects.filter(author_id__in=following_ids).distinct().order_by("-created_at")
@@ -482,6 +604,17 @@ class ToggleLikePostAPIView(APIView):
         else:
             post.likes.add(request.user)
             is_liked = True
+            if post.author != request.user and Notification:
+                try:
+                    Notification.objects.create(
+                        recipient=post.author,
+                        sender=request.user,
+                        notification_type="like",
+                        post=post,
+                        text="liked your post.",
+                    )
+                except Exception:
+                    pass
 
         return Response(
             {
@@ -529,11 +662,83 @@ class CommentCreateAPIView(APIView):
             return Response({"detail": "Comment text cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         comment = Comment.objects.create(post=post, user=request.user, text=str(text).strip())
+
+        if post.author != request.user and Notification:
+            try:
+                Notification.objects.create(
+                    recipient=post.author,
+                    sender=request.user,
+                    notification_type="comment",
+                    post=post,
+                    text=f"commented: {str(text).strip()[:40]}",
+                )
+            except Exception:
+                pass
+
         return Response(
             {
                 "status": "success",
                 "message": "Comment posted successfully.",
-                "data": CommentSerializer(comment).data,
+                "data": CommentSerializer(comment, context={"request": request}).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class CommentReplyAPIView(APIView):
+    """
+    POST /accounts/posts/<post_id>/comments/<comment_id>/replies/
+    Create a reply to a specific comment.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, post_id, comment_id):
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            parent_comment = Comment.objects.get(id=comment_id, post=post)
+        except Comment.DoesNotExist:
+            return Response({"detail": "Comment not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prevent nested-nested replies (keep it one level deep)
+        if parent_comment.parent_id is not None:
+            return Response(
+                {"detail": "Replies to replies are not supported. Reply to the original comment instead."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        text = request.data.get("comment_text") or request.data.get("text")
+        if not text or not str(text).strip():
+            return Response({"detail": "Reply text cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        reply = Comment.objects.create(
+            post=post,
+            user=request.user,
+            parent=parent_comment,
+            text=str(text).strip(),
+        )
+
+        # Notify the original commenter (if not the same user)
+        if parent_comment.user != request.user and Notification:
+            try:
+                Notification.objects.create(
+                    recipient=parent_comment.user,
+                    sender=request.user,
+                    notification_type="comment",
+                    post=post,
+                    text=f"replied to your comment: {str(text).strip()[:40]}",
+                )
+            except Exception:
+                pass
+
+        return Response(
+            {
+                "status": "success",
+                "message": "Reply posted successfully.",
+                "data": ReplySerializer(reply, context={"request": request}).data,
             },
             status=status.HTTP_201_CREATED,
         )

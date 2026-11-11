@@ -6,9 +6,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-y6on4&^y1+^c$5_h4eh-i2fz-c6jmagos9$5b!o!%8=08s#!tm')
 
@@ -36,7 +37,6 @@ INSTALLED_APPS = [
 
     "users",
     "accounts",
-    "posts",
     "notifications",
     "chats",
 ]

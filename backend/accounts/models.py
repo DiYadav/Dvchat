@@ -17,8 +17,13 @@ class Profile(models.Model):
 
 
 class Follow(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+    )
     follower = models.ForeignKey(User, related_name='following_set', on_delete=models.CASCADE)
     following = models.ForeignKey(User, related_name='follower_set', on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -34,7 +39,7 @@ class Follow(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.follower.username} follows {self.following.username}"
+        return f"{self.follower.username} follows {self.following.username} ({self.status})"
 
 
 class Post(models.Model):
@@ -64,6 +69,9 @@ class PostImage(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     user = models.ForeignKey(User, related_name='user_comments', on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        'self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE
+    )
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
