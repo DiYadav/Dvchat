@@ -1,95 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../api/axios";
+import Navbar from "../components/Navbar";
+import CreatePostModal from "../components/CreatePostModal";
 
-// import api from "../api/axios";
-// import Navbar from "../components/Navbar";
-
-// ---------------------------------------------------------------------
-// SCAFFOLD MODE
-// ---------------------------------------------------------------------
-// The backend endpoints for posts/suggestions/likes/comments don't
-// exist yet, so this file ships with mock data below so the page is
-// fully clickable and renders correctly on its own.
-//
-// Once your Django views are ready, do this:
-//   1. Uncomment the `api` and `Navbar` imports above.
-//   2. Replace `fetchFeed()` in the Home component with real calls,
-//      e.g.:
-//        const [postsRes, suggestionsRes] = await Promise.all([
-//          api.get("/posts/"),
-//          api.get("/suggestions/"),
-//        ]);
-//        setPosts(postsRes.data.data);
-//        setSuggestions(suggestionsRes.data.data);
-//   3. Replace the mock handleLike / handleAddComment bodies inside
-//      PostCard with real api.get("/like-post/", ...) and
-//      api.post(`/add-comment/${post.id}/`, ...) calls (already
-//      sketched in the comments below each mock).
-//   4. Delete the MOCK_POSTS / MOCK_SUGGESTIONS / MOCK_CURRENT_USER
-//      constants and this whole banner.
-// ---------------------------------------------------------------------
-
-const MOCK_CURRENT_USER = {
-  username: "you",
-  profileimg: "https://i.pravatar.cc/80?img=12",
-};
-
-const MOCK_POSTS = [
-  {
-    id: 1,
-    user: { username: "aria_codes" },
-    profile_user: "https://i.pravatar.cc/80?img=5",
-    image: "https://picsum.photos/seed/post1/800/600",
-    caption: "Shipping something new today 🚀",
-    is_liked: false,
-    no_of_likes: 12,
-    comments: [
-      {
-        id: 101,
-        user: {
-          username: "devon",
-          profile: { profileimg: "https://i.pravatar.cc/80?img=8" },
-        },
-        text: "Looks great!",
-        created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-      },
-    ],
-  },
-  {
-    id: 2,
-    user: { username: "maya.k" },
-    profile_user: "https://i.pravatar.cc/80?img=32",
-    image: "https://picsum.photos/seed/post2/800/600",
-    caption: "Weekend hike 🌲",
-    is_liked: true,
-    no_of_likes: 34,
-    comments: [],
-  },
-];
-
-const MOCK_SUGGESTIONS = [
-  {
-    id: 1,
-    user: "sam.codes",
-    profileimg: "https://i.pravatar.cc/80?img=15",
-    bio: "Frontend dev, coffee addict",
-  },
-  {
-    id: 2,
-    user: "lena_r",
-    profileimg: "https://i.pravatar.cc/80?img=47",
-    bio: "Designer & illustrator",
-  },
-];
-// ---------------------------------------------------------------------
-
-// Rough client-side equivalent of Django's `timesince` filter.
 function timeSince(dateString) {
-  if (!dateString) return "";
-
-  const seconds = Math.floor(
-    (Date.now() - new Date(dateString).getTime()) / 1000
-  );
+  if (!dateString) return "just now";
+  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
+  if (seconds < 60) return "just now";
 
   const units = [
     { label: "y", secs: 31536000 },
@@ -101,36 +19,147 @@ function timeSince(dateString) {
 
   for (const unit of units) {
     const value = Math.floor(seconds / unit.secs);
-    if (value >= 1) return `${value}${unit.label}`;
+    if (value >= 1) return `${value}${unit.label} ago`;
   }
-
   return "just now";
 }
 
-function PostCard({ post, currentUser, onLikeToggled, onCommentAdded }) {
+function CommentItem({ comment, postId, currentUser, onReplyAdded }) {
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [postingReply, setPostingReply] = useState(false);
+  const replies = comment.replies || [];
+
+  const handleAddReply = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim() || postingReply) return;
+    try {
+      setPostingReply(true);
+      const res = await api.post(
+        `/accounts/posts/${postId}/comments/${comment.id}/replies/`,
+        { comment_text: replyText.trim() }
+      );
+      if (res.data?.status === "success" && res.data?.data) {
+        onReplyAdded(comment.id, res.data.data);
+        setReplyText("");
+        setShowReplyInput(false);
+        setShowReplies(true);
+      }
+    } catch (err) {
+      console.error("Add reply failed:", err);
+    } finally {
+      setPostingReply(false);
+    }
+  };
+
+  return (
+    <div className="text-xs space-y-1.5">
+      {/* Main comment */}
+      <div className="flex items-start space-x-2.5">
+        <img
+          src={comment.profileimg || "/media/blank-profile-picture.png"}
+          alt={comment.username}
+          onError={(e) => { e.target.onerror = null; e.target.src = "/media/blank-profile-picture.png"; }}
+          className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-slate-800"
+        />
+        <div className="flex-1">
+          <div className="bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2">
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="font-semibold text-teal-300">@{comment.username}</span>
+              <span className="text-[10px] text-gray-500">{timeSince(comment.created_at)}</span>
+            </div>
+            <p className="text-gray-200">{comment.text}</p>
+          </div>
+          {/* Reply + toggle controls */}
+          <div className="flex items-center space-x-3 mt-1 pl-1">
+            <button
+              onClick={() => setShowReplyInput((v) => !v)}
+              className="text-[11px] text-teal-400 hover:text-teal-300 font-medium transition"
+            >
+              {showReplyInput ? "Cancel" : "Reply"}
+            </button>
+            {replies.length > 0 && (
+              <button
+                onClick={() => setShowReplies((v) => !v)}
+                className="text-[11px] text-gray-400 hover:text-gray-200 transition"
+              >
+                {showReplies ? "Hide" : `View`} {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Reply Input */}
+      {showReplyInput && (
+        <form onSubmit={handleAddReply} className="flex items-center space-x-2 pl-9 mt-1">
+          <input
+            type="text"
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder={`Reply to @${comment.username}...`}
+            className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-teal-500"
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={postingReply || !replyText.trim()}
+            className="bg-teal-500 hover:bg-teal-600 disabled:opacity-40 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition"
+          >
+            {postingReply ? "..." : "Send"}
+          </button>
+        </form>
+      )}
+
+      {/* Nested Replies */}
+      {showReplies && replies.length > 0 && (
+        <div className="pl-9 space-y-2 mt-1">
+          {replies.map((reply) => (
+            <div key={reply.id} className="flex items-start space-x-2">
+              <img
+                src={reply.profileimg || "/media/blank-profile-picture.png"}
+                alt={reply.username}
+                onError={(e) => { e.target.onerror = null; e.target.src = "/media/blank-profile-picture.png"; }}
+                className="w-6 h-6 rounded-full object-cover flex-shrink-0 border border-slate-800"
+              />
+              <div className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-1.5 flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="font-semibold text-teal-300 text-[11px]">@{reply.username}</span>
+                  <span className="text-[10px] text-gray-500">{timeSince(reply.created_at)}</span>
+                </div>
+                <p className="text-gray-200 text-[11px]">{reply.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PostCard({ post, currentUser, onLikeToggled, onCommentAdded, onPostDeleted }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  const [posting, setPosting] = useState(false);
+  const [postingComment, setPostingComment] = useState(false);
   const [liking, setLiking] = useState(false);
+  const [localComments, setLocalComments] = useState(post.comments || []);
 
-  const comments = [...(post.comments || [])].sort(
-    (a, b) => new Date(b.created_at) - new Date(a.created_at)
-  );
+  // Sync when post prop changes
+  useState(() => { setLocalComments(post.comments || []); }, [post.comments]);
+
+  const isOwner = currentUser?.username === post.author || currentUser?.id === post.author_id;
 
   const handleLike = async () => {
     if (liking) return;
-
     try {
       setLiking(true);
-
-      // MOCK: flips the like locally. Swap for:
-      //   const response = await api.get("/like-post/", { params: { post_id: post.id } });
-      //   if (response.data.status === "success") onLikeToggled(post.id, response.data.data);
-      const nextLiked = !post.is_liked;
-      onLikeToggled(post.id, {
-        is_liked: nextLiked,
-        no_of_likes: post.no_of_likes + (nextLiked ? 1 : -1),
-      });
+      const res = await api.post(`/accounts/posts/${post.id}/toggle-like/`);
+      if (res.data?.status === "success" && res.data?.data) {
+        onLikeToggled(post.id, res.data.data);
+      }
+    } catch (err) {
+      console.error("Like toggle failed:", err);
     } finally {
       setLiking(false);
     }
@@ -138,218 +167,192 @@ function PostCard({ post, currentUser, onLikeToggled, onCommentAdded }) {
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-
-    if (!commentText.trim() || posting) return;
+    if (!commentText.trim() || postingComment) return;
 
     try {
-      setPosting(true);
-
-      // MOCK: appends the comment locally. Swap for:
-      //   const response = await api.post(`/add-comment/${post.id}/`, { comment_text: commentText });
-      //   if (response.data.status === "success") onCommentAdded(post.id, response.data.data);
-      onCommentAdded(post.id, {
-        id: Date.now(),
-        user: {
-          username: currentUser.username,
-          profile: { profileimg: currentUser.profileimg },
-        },
-        text: commentText,
-        created_at: new Date().toISOString(),
+      setPostingComment(true);
+      const res = await api.post(`/accounts/posts/${post.id}/comments/`, {
+        comment_text: commentText.trim(),
       });
-      setCommentText("");
+      if (res.data?.status === "success" && res.data?.data) {
+        const newComment = { ...res.data.data, replies: [] };
+        setLocalComments((prev) => [...prev, newComment]);
+        onCommentAdded(post.id, newComment);
+        setCommentText("");
+      }
+    } catch (err) {
+      console.error("Add comment failed:", err);
     } finally {
-      setPosting(false);
+      setPostingComment(false);
     }
   };
 
-  const likeLabel =
-    post.no_of_likes === 0
-      ? "No likes"
-      : post.no_of_likes === 1
-      ? "Liked by 1 person"
-      : `Liked by ${post.no_of_likes} people`;
+  const handleReplyAdded = (commentId, newReply) => {
+    setLocalComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId ? { ...c, replies: [...(c.replies || []), newReply] } : c
+      )
+    );
+  };
+
+  const handleDeletePost = async () => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      await api.delete(`/accounts/posts/${post.id}/`);
+      onPostDeleted(post.id);
+    } catch (err) {
+      console.error("Delete post failed:", err);
+    }
+  };
+
+  const comments = localComments;
 
   return (
-    <div className="bg-slate-900 rounded-2xl shadow">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden transition hover:border-slate-700">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
         <div className="flex items-center space-x-3">
-          <Link
-            to={
-              post.user?.username
-                ? `/profile/${post.user.username}`
-                : "#"
-            }
-          >
+          <Link to={`/profile/${post.author}`}>
             <img
-              src={post.profile_user}
-              alt={post.user?.username}
-              className="w-10 h-10 rounded-full object-cover"
+              src={post.author_profileimg || "/media/blank-profile-picture.png"}
+              alt={post.author}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/media/blank-profile-picture.png";
+              }}
+              className="w-10 h-10 rounded-full object-cover border border-slate-700"
             />
           </Link>
-          <span className="font-semibold text-white">
-            @{post.user?.username}
-          </span>
+          <div>
+            <Link
+              to={`/profile/${post.author}`}
+              className="font-bold text-white hover:text-teal-400 text-sm transition"
+            >
+              @{post.author}
+            </Link>
+            <p className="text-xs text-gray-400">{timeSince(post.created_at)}</p>
+          </div>
         </div>
-        <button className="text-gray-400 hover:text-gray-200">...</button>
+
+        {isOwner && (
+          <button
+            onClick={handleDeletePost}
+            title="Delete post"
+            className="text-gray-500 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-800 transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        )}
       </div>
 
-      {/* Post Image */}
-      {post.image ? (
-        <img
-          src={post.image}
-          alt="Post"
-          className="w-full h-[450px] object-cover"
-        />
-      ) : (
-        <img
-          src="/static/assets/images/posts/default-post.jpg"
-          alt="Post"
-          className="w-full"
-        />
+      {/* Caption if at top or without image */}
+      {post.caption && (
+        <div className="px-5 py-3 text-sm text-gray-200 whitespace-pre-line leading-relaxed">
+          {post.caption}
+        </div>
       )}
 
-      {/* Post Body */}
-      <div className="px-4 py-3 space-y-6">
-        {/* Like, Comment, Download */}
-        <div className="flex items-center w-[300px] space-x-4">
+      {/* Post Image */}
+      {post.image && (
+        <div className="bg-black max-h-[500px] overflow-hidden flex items-center justify-center">
+          <img
+            src={post.image}
+            alt="Post content"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = "none";
+            }}
+            className="w-full object-contain max-h-[500px]"
+            loading="lazy"
+          />
+        </div>
+      )}
+
+      {/* Action Bar (Like, Comment, Count) */}
+      <div className="px-5 py-3 border-t border-slate-800/60">
+        <div className="flex items-center space-x-6">
+          {/* Like Button */}
           <button
             onClick={handleLike}
             disabled={liking}
-            className="flex items-center space-x-1 group disabled:opacity-60"
+            className="flex items-center space-x-2 text-sm group focus:outline-none"
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={post.is_liked ? "red" : "none"}
-              stroke={post.is_liked ? "red" : "currentColor"}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-white transition-colors duration-300"
-            >
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-            </svg>
-            <span
-              className={`text-sm ${
-                post.is_liked ? "text-white" : "text-gray-400"
+              className={`w-6 h-6 transition transform active:scale-125 ${
+                post.is_liked ? "text-rose-500 fill-rose-500" : "text-gray-400 group-hover:text-rose-400"
               }`}
-            >
-              {likeLabel}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setShowComments((v) => !v)}
-            className="text-white text-lg"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
               viewBox="0 0 24 24"
-              fill="none"
               stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              fill={post.is_liked ? "currentColor" : "none"}
             >
-              <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
             </svg>
+            <span className={`font-medium ${post.is_liked ? "text-rose-400" : "text-gray-400"}`}>
+              {post.likes_count || 0}
+            </span>
           </button>
 
-          {post.image ? (
-            <a
-              href={post.image}
-              download
-              className="ml-auto text-gray-500"
-            >
-              ⬇️
-            </a>
-          ) : (
-            <span className="ml-auto text-gray-500 cursor-not-allowed opacity-50">
-              ⬇️
-            </span>
-          )}
+          {/* Comment Toggle */}
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center space-x-2 text-sm text-gray-400 hover:text-teal-400 group focus:outline-none transition"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <span className="font-medium">{comments.length}</span>
+          </button>
         </div>
 
-        {/* Caption */}
-        <div className="text-sm text-white">
-          <strong>{post.user?.username}</strong> {post.caption}
-        </div>
-
-        {/* Comment Section */}
+        {/* Comment Drawer */}
         {showComments && (
-          <div>
-            {/* All Comments Scrollable */}
-            <div className="max-h-60 overflow-y-auto scrollbar-hide pr-2 space-y-3 mt-2">
-              {comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  className="flex items-start space-x-3 text-sm"
-                >
-                  <Link
-                    to={`/profile/${comment.user.username}`}
-                    className="flex-shrink-0"
-                  >
-                    <img
-                      src={
-                        comment.user?.profile?.profileimg ||
-                        "/static/blank-profile-picture.png"
-                      }
-                      alt={`${comment.user.username}'s profile`}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  </Link>
-                  <div className="w-[800px] text-white p-2 rounded">
-                    <strong className="text-blue-500">
-                      @{comment.user.username}
-                    </strong>{" "}
-                    {comment.text}
-                    <p className="text-xs text-gray-400 mt-1">
-                      {timeSince(comment.created_at)} ago
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-              {comments.length === 0 && (
-                <p className="text-white/40 text-xs">
-                  No comments yet. Be the first to say something.
-                </p>
+          <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-3">
+            {/* Comments List */}
+            <div className="max-h-72 overflow-y-auto space-y-3 pr-2">
+              {comments.length === 0 ? (
+                <p className="text-xs text-gray-500 py-2">No comments yet. Be the first!</p>
+              ) : (
+                comments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    postId={post.id}
+                    currentUser={currentUser}
+                    onReplyAdded={handleReplyAdded}
+                  />
+                ))
               )}
             </div>
 
-            {/* Comment Input Box */}
-            {currentUser && (
-              <form onSubmit={handleAddComment} className="relative mt-4">
-                <div className="flex items-center space-x-2">
-                  <img
-                    src={currentUser.profileimg}
-                    alt="Your profile"
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <input
-                    type="text"
-                    name="comment_text"
-                    placeholder="Post a comment"
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    className="w-full rounded-2xl px-3 py-2 text-sm bg-slate-800 text-white"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    disabled={posting}
-                    className="text-sm text-white bg-blue-500 px-3 py-1 rounded-xl hover:bg-blue-600 disabled:opacity-50"
-                  >
-                    {posting ? "..." : "Post"}
-                  </button>
-                </div>
-              </form>
-            )}
+            {/* Comment Form */}
+            <form onSubmit={handleAddComment} className="flex items-center space-x-2 pt-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Write a comment..."
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-teal-500"
+              />
+              <button
+                type="submit"
+                disabled={postingComment || !commentText.trim()}
+                className="bg-teal-500 hover:bg-teal-600 disabled:opacity-40 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition"
+              >
+                {postingComment ? "..." : "Post"}
+              </button>
+            </form>
           </div>
         )}
       </div>
@@ -362,30 +365,43 @@ function Home() {
   const [suggestions, setSuggestions] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [inlineCaption, setInlineCaption] = useState("");
 
-  const fetchFeed = async () => {
-    setLoading(true);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [profileRes, postsRes, suggestionsRes] = await Promise.all([
+        api.get("/accounts/profile/"),
+        api.get("/accounts/posts/"),
+        api.get("/accounts/suggestions/"),
+      ]);
 
-    // MOCK: replace this block with the real api.get() calls once the
-    // backend exists (see the banner comment at the top of this file).
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    setPosts(MOCK_POSTS);
-    setSuggestions(MOCK_SUGGESTIONS);
-    setCurrentUser(MOCK_CURRENT_USER);
-
-    setLoading(false);
+      if (profileRes.data?.data) {
+        setCurrentUser(profileRes.data.data);
+      }
+      if (postsRes.data?.data) {
+        setPosts(postsRes.data.data);
+      }
+      if (suggestionsRes.data?.data) {
+        setSuggestions(suggestionsRes.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to load feed data:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchFeed();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadData();
   }, []);
 
   const handleLikeToggled = (postId, data) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
-          ? { ...p, is_liked: data.is_liked, no_of_likes: data.no_of_likes }
+          ? { ...p, is_liked: data.is_liked, likes_count: data.no_of_likes }
           : p
       )
     );
@@ -395,105 +411,209 @@ function Home() {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId
-          ? { ...p, comments: [...(p.comments || []), newComment] }
+          ? { ...p, comments: [...(p.comments || []), { ...newComment, replies: newComment.replies || [] }] }
           : p
       )
     );
   };
 
-  // Posts render newest-first, mirroring `{% for post in posts reversed %}`.
-  const orderedPosts = [...posts].reverse();
+  const handleReplyAddedInFeed = (postId, commentId, newReply) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              comments: (p.comments || []).map((c) =>
+                c.id === commentId ? { ...c, replies: [...(c.replies || []), newReply] } : c
+              ),
+            }
+          : p
+      )
+    );
+  };
+
+  const handlePostDeleted = (postId) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+
+  const handlePostCreated = (newPost) => {
+    setPosts((prev) => [newPost, ...prev]);
+  };
+
+  const handleFollowUser = async (userId, targetUsername) => {
+    try {
+      const res = await api.post("/accounts/follow/", { user_id: userId });
+      if (res.status === 200 || res.status === 201) {
+        setSuggestions((prev) =>
+          prev.map((u) => (u.id === userId ? { ...u, is_requested: true } : u))
+        );
+        setTimeout(() => {
+          setSuggestions((prev) => prev.filter((u) => u.id !== userId));
+        }, 1200);
+        // Refresh feed so newly followed user's posts show up if auto-accepted
+        const feedRes = await api.get("/accounts/posts/");
+        if (feedRes.data?.data) {
+          setPosts(feedRes.data.data);
+        }
+      }
+    } catch (err) {
+      console.error("Follow error:", err);
+    }
+  };
 
   return (
-    <div className="bg-black font-sans min-h-screen">
-      <div className="flex">
-        {/* <Navbar /> */}
-        <div className="w-56 shrink-0 border-r border-slate-800 p-4 text-white/40 text-xs">
-          Navbar placeholder — send navbar.html and I'll build the real one.
-        </div>
+    <div className="bg-slate-950 min-h-screen text-slate-100 font-sans">
+      <Navbar onOpenCreatePost={() => setIsCreateModalOpen(true)} currentUser={currentUser} />
 
-        <div className="flex-1 container mx-auto p-4">
-          <h1 className="text-2xl text-white font-bold mb-4">Feeds</h1>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main Feed Column */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Quick Create Post Box */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
+              <div className="flex items-center space-x-3">
+                <img
+                  src={currentUser?.profileimg || "/media/blank-profile-picture.png"}
+                  alt="avatar"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/media/blank-profile-picture.png";
+                  }}
+                  className="w-10 h-10 rounded-full object-cover border border-slate-700"
+                />
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex-1 text-left bg-slate-950 border border-slate-800 text-gray-400 hover:text-gray-200 px-4 py-2.5 rounded-xl text-sm hover:border-slate-700 transition"
+                >
+                  Share something new, {currentUser?.username || "friend"}...
+                </button>
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white p-2.5 rounded-xl transition shadow-md shadow-teal-500/10"
+                  title="Attach Photo / Create Post"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-          <div className="lg:flex lg:space-x-8">
-            {/* Left: Posts */}
-            <div className="lg:w-7/12 space-y-6 max-h-[90vh] overflow-y-auto scrollbar-hide pr-2">
-              {loading && (
-                <p className="text-white/60 text-sm">Loading feed...</p>
-              )}
-
-              {!loading && orderedPosts.length === 0 && (
-                <p className="text-white/60 text-sm">
-                  No posts yet. Follow people to see their posts here.
-                </p>
-              )}
-
-              {orderedPosts.map((post) => (
+            {/* Posts List */}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 space-y-3">
+                <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-gray-400 text-sm">Loading feed...</p>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center space-y-4">
+                <div className="w-16 h-16 bg-slate-800 text-teal-400 rounded-full flex items-center justify-center mx-auto">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Your Feed is Quiet</h3>
+                  <p className="text-sm text-gray-400 mt-1 max-w-sm mx-auto">
+                    Create your first post or follow some friends on the right to see what everyone is up to!
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl text-sm hover:from-teal-600 hover:to-emerald-700 transition shadow-lg shadow-teal-500/10"
+                >
+                  Create First Post
+                </button>
+              </div>
+            ) : (
+              posts.map((post) => (
                 <PostCard
                   key={post.id}
                   post={post}
                   currentUser={currentUser}
                   onLikeToggled={handleLikeToggled}
                   onCommentAdded={handleCommentAdded}
+                  onPostDeleted={handlePostDeleted}
                 />
-              ))}
-            </div>
+              ))
+            )}
+          </div>
 
-            {/* Right: Suggestions */}
-            <div className="lg:w-5/12">
-              <div className="bg-slate-800 rounded-xl shadow">
-                <div className="border-b border-slate-700 px-6 py-4 flex justify-between items-center">
-                  <h2 className="text-white text-lg font-semibold">
-                    Users You Can Follow
-                  </h2>
-                  <button
-                    onClick={fetchFeed}
-                    className="text-blue-500 text-sm hover:text-blue-400"
-                  >
-                    Refresh
-                  </button>
-                </div>
-                <div className="divide-y divide-slate-700">
-                  {suggestions.map((suggestion) => (
-                    <div
-                      key={suggestion.id}
-                      className="flex items-center justify-between px-6 py-4"
-                    >
-                      <div className="flex text-white items-center space-x-3">
-                        <Link to={`/profile/${suggestion.user}`}>
-                          <img
-                            src={suggestion.profileimg}
-                            alt={suggestion.user}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        </Link>
-                        <div>
-                          <p className="font-semibold">{suggestion.user}</p>
-                          <p className="text-sm text-white/70">
-                            {suggestion.bio}
-                          </p>
-                        </div>
-                      </div>
+          {/* Right Sidebar: Suggestions */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg sticky top-24">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  People to Follow
+                </h3>
+                <button
+                  onClick={loadData}
+                  className="text-xs text-teal-400 hover:text-teal-300 transition"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              <div className="mt-4 divide-y divide-slate-800/60">
+                {suggestions.length === 0 ? (
+                  <p className="text-xs text-gray-500 py-4 text-center">
+                    No suggestions right now. You're connected with everyone!
+                  </p>
+                ) : (
+                  suggestions.map((user) => (
+                    <div key={user.id} className="py-3 flex items-center justify-between space-x-3">
                       <Link
-                        to={`/profile/${suggestion.user}`}
-                        className="border border-white/30 px-3 py-1 rounded text-sm text-white hover:bg-pink-600 hover:border-pink-600 transition"
+                        to={`/profile/${user.username}`}
+                        className="flex items-center space-x-3 min-w-0 group"
                       >
-                        View
+                        <img
+                          src={user.profileimg || "/media/blank-profile-picture.png"}
+                          alt={user.username}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/media/blank-profile-picture.png";
+                          }}
+                          className="w-10 h-10 rounded-full object-cover border border-slate-700 group-hover:border-teal-400 transition"
+                        />
+                        <div className="truncate">
+                          <p className="text-sm font-semibold text-white group-hover:text-teal-400 transition truncate">
+                            @{user.username}
+                          </p>
+                          {user.bio ? (
+                            <p className="text-xs text-gray-400 truncate">{user.bio}</p>
+                          ) : (
+                            <p className="text-xs text-emerald-400/80">New on DVChat</p>
+                          )}
+                        </div>
                       </Link>
-                    </div>
-                  ))}
 
-                  {suggestions.length === 0 && (
-                    <p className="text-white/50 text-sm px-6 py-4">
-                      No suggestions right now.
-                    </p>
-                  )}
-                </div>
+                      <button
+                        onClick={() => handleFollowUser(user.id, user.username)}
+                        disabled={user.is_requested}
+                        className={`flex-shrink-0 font-semibold px-3 py-1.5 rounded-xl text-xs transition border ${
+                          user.is_requested
+                            ? "bg-slate-800 text-teal-400 border-teal-500/40"
+                            : "bg-slate-800 hover:bg-teal-500 hover:text-slate-950 text-teal-400 border-teal-500/20"
+                        }`}
+                      >
+                        {user.is_requested ? "Requested" : "Follow"}
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Modal */}
+      <CreatePostModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onPostCreated={handlePostCreated}
+        currentUser={currentUser}
+      />
     </div>
   );
 }
