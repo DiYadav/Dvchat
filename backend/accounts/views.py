@@ -52,6 +52,7 @@ class MyProfileAPIView(APIView):
 
     def patch(self, request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
+        print("REQUEST FILES:", request.FILES)
         serializer = MyProfileSerializer(
             profile, data=request.data, partial=True, context={"request": request}
         )
@@ -65,6 +66,7 @@ class MyProfileAPIView(APIView):
                 },
                 status=status.HTTP_200_OK,
             )
+        print("SERIALZER ERRORS:", serializer.errors)
         return Response(
             {"status": "error", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,

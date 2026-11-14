@@ -152,7 +152,8 @@ class PostCreateSerializer(serializers.ModelSerializer):
 class MyProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
-    profileimg = serializers.SerializerMethodField()
+    profileimg = serializers.ImageField(required=False, allow_null=True)
+    profileimg_url = serializers.SerializerMethodField()
     has_face_registered = serializers.SerializerMethodField()
 
     class Meta:
@@ -164,12 +165,13 @@ class MyProfileSerializer(serializers.ModelSerializer):
             "bio",
             "location",
             "profileimg",
+            "profileimg_url",
             "is_face_login_enabled",
             "has_face_registered",
         ]
-        read_only_fields = ["id", "username", "email", "has_face_registered"]
+        read_only_fields = ["id", "username", "email", "has_face_registered","profileimg_url",]
 
-    def get_profileimg(self, obj):
+    def get_profileimg_url(self, obj):
         request = self.context.get("request")
         if obj.profileimg:
             return make_absolute_url(request, obj.profileimg.url)
