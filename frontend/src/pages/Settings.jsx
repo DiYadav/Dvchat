@@ -329,7 +329,7 @@ const Settings = () => {
                     htmlFor="avatar-upload"
                     className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold px-4 py-2 rounded-xl text-xs border border-slate-700 transition"
                   >
-                    Change Avatar
+                    Change Profile
                   </label>
                   <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF, max 5MB.</p>
                 </div>
