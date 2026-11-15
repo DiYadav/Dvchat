@@ -8,14 +8,17 @@ import {
 
 const api = axios.create({
   baseURL: "http://127.0.0.1:8000/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Request Interceptor: Attach JWT Bearer Token
 api.interceptors.request.use(
   (config) => {
+
+    // Handle image/file uploads
+    if (config.data instanceof FormData) {
+      config.headers.delete("Content-Type");
+    }
+    // Attach JWT token
     const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

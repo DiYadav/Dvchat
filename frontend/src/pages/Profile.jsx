@@ -56,26 +56,28 @@ const Profile = () => {
       setLoading(false);
     }
   };
-  const handleCameraCapture = async (file) => {
-    try {
-      const formData = new FormData();
+const handleCameraCapture = async (file) => {
+  console.log("Received in Profile.jsx:", file);
+  console.log("Is File:", file instanceof File);
 
-      formData.append("profileimg", file);
+  const formData = new FormData();
+  formData.append("profileimg", file, file.name);
 
-      const response = await api.patch("/accounts/profile/", formData);
+  console.log("FormData value:", formData.get("profileimg"));
 
-      console.log("Profile image updated:", response.data);
+  try {
+    const response = await api.patch(
+      "/accounts/profile/",
+      formData
+    );
 
-      setShowCamera(false);
-
-      await fetchProfile();
-    } catch (error) {
-      console.error(
-        "Profile image upload failed:",
-        error.response?.data || error,
-      );
-    }
-  };
+    console.log("Upload response:", response.data);
+    setShowCamera(false);
+    await fetchProfile();
+  } catch (error) {
+    console.error("Upload error:", error.response?.data || error);
+  }
+};
 
   useEffect(() => {
     fetchProfile();
