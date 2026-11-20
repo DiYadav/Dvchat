@@ -15,6 +15,7 @@ class Notification(models.Model):
     sender = models.ForeignKey(User, related_name="sent_notifications", on_delete=models.CASCADE)
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     post = models.ForeignKey(Post, null=True, blank=True, on_delete=models.CASCADE)
+    comment = models.ForeignKey('accounts.Comment', null=True, blank=True, on_delete=models.SET_NULL)
     text = models.CharField(max_length=255, blank=True, default="")
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

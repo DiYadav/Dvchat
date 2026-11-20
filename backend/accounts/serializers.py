@@ -168,6 +168,7 @@ class MyProfileSerializer(serializers.ModelSerializer):
             "profileimg_url",
             "is_face_login_enabled",
             "has_face_registered",
+            "is_private",
         ]
         read_only_fields = ["id", "username", "email", "has_face_registered","profileimg_url",]
 

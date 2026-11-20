@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import Navbar from "../components/Navbar";
 import CreatePostModal from "../components/CreatePostModal";
@@ -138,7 +138,7 @@ function CommentItem({ comment, postId, currentUser, onReplyAdded }) {
   );
 }
 
-function PostCard({ post, currentUser, onLikeToggled, onCommentAdded, onPostDeleted }) {
+function PostCard({ post, currentUser, onLikeToggled, onCommentAdded, onPostDeleted, highlightCommentId }) {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
@@ -147,6 +147,13 @@ function PostCard({ post, currentUser, onLikeToggled, onCommentAdded, onPostDele
 
   // Sync when post prop changes
   useState(() => { setLocalComments(post.comments || []); }, [post.comments]);
+
+  // Auto-open comments when navigated from a comment notification
+  useEffect(() => {
+    if (highlightCommentId) {
+      setShowComments(true);
+    }
+  }, [highlightCommentId]);
 
   const isOwner = currentUser?.username === post.author || currentUser?.id === post.author_id;
 
@@ -367,6 +374,11 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [inlineCaption, setInlineCaption] = useState("");
+  const [searchParams] = useSearchParams();
+  const highlightPostId = searchParams.get("highlightPost") ? parseInt(searchParams.get("highlightPost")) : null;
+  const highlightCommentId = searchParams.get("highlightComment") ? parseInt(searchParams.get("highlightComment")) : null;
+  const [highlightedPostId, setHighlightedPostId] = useState(null);
+  const postRefs = useRef({});
 
   const loadData = async () => {
     try {
@@ -396,6 +408,20 @@ function Home() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Scroll to and highlight post from notification click
+  useEffect(() => {
+    if (!highlightPostId || loading) return;
+    setHighlightedPostId(highlightPostId);
+    const timer = setTimeout(() => {
+      const el = postRefs.current[highlightPostId];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 400);
+    const clearTimer = setTimeout(() => setHighlightedPostId(null), 3500);
+    return () => { clearTimeout(timer); clearTimeout(clearTimer); };
+  }, [highlightPostId, loading]);
 
   const handleLikeToggled = (postId, data) => {
     setPosts((prev) =>
@@ -527,14 +553,20 @@ function Home() {
               </div>
             ) : (
               posts.map((post) => (
-                <PostCard
+                <div
                   key={post.id}
-                  post={post}
-                  currentUser={currentUser}
-                  onLikeToggled={handleLikeToggled}
-                  onCommentAdded={handleCommentAdded}
-                  onPostDeleted={handlePostDeleted}
-                />
+                  ref={(el) => { postRefs.current[post.id] = el; }}
+                  className={highlightedPostId === post.id ? "ring-2 ring-teal-400 rounded-2xl transition-all duration-500" : ""}
+                >
+                  <PostCard
+                    post={post}
+                    currentUser={currentUser}
+                    onLikeToggled={handleLikeToggled}
+                    onCommentAdded={handleCommentAdded}
+                    onPostDeleted={handlePostDeleted}
+                    highlightCommentId={highlightedPostId === post.id ? highlightCommentId : null}
+                  />
+                </div>
               ))
             )}
           </div>

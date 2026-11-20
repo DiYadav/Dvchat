@@ -120,6 +120,13 @@ const Navbar = ({ onOpenCreatePost, currentUser }) => {
       navigate(`/chat?userId=${notif.sender_id}`);
     } else if (notif.notification_type === "follow") {
       navigate(`/profile/${notif.sender_username}`);
+    } else if (notif.notification_type === "comment" || notif.notification_type === "like") {
+      if (notif.post_id) {
+        const commentPart = notif.comment_id ? `&highlightComment=${notif.comment_id}` : "";
+        navigate(`/home?highlightPost=${notif.post_id}${commentPart}`);
+      } else {
+        navigate(`/profile/${notif.sender_username}`);
+      }
     } else {
       navigate(`/profile/${notif.sender_username}`);
     }

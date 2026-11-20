@@ -9,6 +9,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     sender_username = serializers.ReadOnlyField(source="sender.username")
     sender_profileimg = serializers.SerializerMethodField()
     post_id = serializers.ReadOnlyField(source="post.id")
+    comment_id = serializers.ReadOnlyField(source="comment.id")
     is_follow_pending = serializers.SerializerMethodField()
     can_follow_back = serializers.SerializerMethodField()
 
@@ -21,6 +22,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "sender_profileimg",
             "notification_type",
             "post_id",
+            "comment_id",
             "text",
             "is_read",
             "created_at",
@@ -34,6 +36,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             "sender_profileimg",
             "notification_type",
             "post_id",
+            "comment_id",
             "created_at",
             "is_follow_pending",
             "can_follow_back",

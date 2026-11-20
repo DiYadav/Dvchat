@@ -36,6 +36,11 @@ const Profile = () => {
   const [modalSubmittingComment, setModalSubmittingComment] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
 
+  // Follow list modal states
+  const [followListModal, setFollowListModal] = useState(null); // 'followers' | 'following' | null
+  const [followListData, setFollowListData] = useState([]);
+  const [followListLoading, setFollowListLoading] = useState(false);
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -56,6 +61,24 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  const fetchFollowList = async (type) => {
+    if (!profile) return;
+    try {
+      setFollowListLoading(true);
+      setFollowListData([]);
+      const endpoint = type === "followers" ? "/accounts/followers/" : "/accounts/following/";
+      const res = await api.get(endpoint, { params: { username: profile.username } });
+      if (res.data?.data) {
+        setFollowListData(res.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to load follow list:", err);
+    } finally {
+      setFollowListLoading(false);
+    }
+  };
+
 const handleCameraCapture = async (file) => {
   console.log("Received in Profile.jsx:", file);
   console.log("Is File:", file instanceof File);
@@ -276,6 +299,7 @@ const handleCameraCapture = async (file) => {
         profile.username.toLowerCase() === currentUser.username.toLowerCase()));
 
   const posts = profile.posts || [];
+  const isPrivateAndLocked = profile.is_private && !isSelf && profile.follow_status !== "accepted";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-16">
@@ -464,22 +488,28 @@ const handleCameraCapture = async (file) => {
                     Posts
                   </span>
                 </div>
-                <div>
+                <button
+                  onClick={() => { setFollowListModal("followers"); fetchFollowList("followers"); }}
+                  className="text-left hover:opacity-80 transition focus:outline-none"
+                >
                   <span className="font-extrabold text-white text-lg">
                     {profile.followers_count || 0}
                   </span>
                   <span className="text-xs text-gray-400 ml-1.5 uppercase tracking-wider">
                     Followers
                   </span>
-                </div>
-                <div>
+                </button>
+                <button
+                  onClick={() => { setFollowListModal("following"); fetchFollowList("following"); }}
+                  className="text-left hover:opacity-80 transition focus:outline-none"
+                >
                   <span className="font-extrabold text-white text-lg">
                     {profile.following_count || 0}
                   </span>
                   <span className="text-xs text-gray-400 ml-1.5 uppercase tracking-wider">
                     Following
                   </span>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -514,7 +544,17 @@ const handleCameraCapture = async (file) => {
             <span>{isSelf ? "My Posts" : `Posts by @${profile.username}`}</span>
           </h3>
 
-          {posts.length === 0 ? (
+          {isPrivateAndLocked ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
+              <div className="w-14 h-14 mx-auto bg-slate-800 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <p className="text-white font-semibold">This account is private</p>
+              <p className="text-gray-400 text-sm">Follow @{profile.username} to see their posts.</p>
+            </div>
+          ) : posts.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-gray-400 text-sm">
               {isSelf
                 ? "You haven't posted any updates yet. Click 'New Post' on the navigation bar to share your first post!"
@@ -578,6 +618,61 @@ const handleCameraCapture = async (file) => {
           )}
         </div>
       </main>
+
+      {/* Followers / Following List Modal */}
+      {followListModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setFollowListModal(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full max-h-[80vh] overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
+              <h3 className="font-bold text-white capitalize">{followListModal}</h3>
+              <button
+                onClick={() => setFollowListModal(null)}
+                className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] divide-y divide-slate-800/50">
+              {followListLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-7 h-7 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : followListData.length === 0 ? (
+                <p className="text-center text-gray-500 text-sm py-10">No {followListModal} yet.</p>
+              ) : (
+                followListData.map((u) => (
+                  <div key={u.id} className="flex items-center space-x-3 px-5 py-3 hover:bg-slate-800/60 transition">
+                    <Link to={`/profile/${u.username}`} onClick={() => setFollowListModal(null)}>
+                      <img
+                        src={u.profileimg || "/media/blank-profile-picture.png"}
+                        alt={u.username}
+                        onError={(e) => { e.target.onerror = null; e.target.src = "/media/blank-profile-picture.png"; }}
+                        className="w-10 h-10 rounded-full object-cover border border-slate-700"
+                      />
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to={`/profile/${u.username}`}
+                        onClick={() => setFollowListModal(null)}
+                        className="font-semibold text-white text-sm hover:text-teal-400 transition truncate block"
+                      >
+                        @{u.username}
+                      </Link>
+                      {u.bio && <p className="text-xs text-gray-400 truncate">{u.bio}</p>}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Post Detail Modal */}
       {selectedPost && (
