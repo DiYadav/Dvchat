@@ -81,7 +81,9 @@ const Settings = () => {
       const initCamera = async () => {
         setFaceError("");
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          setFaceError("Camera API is not supported in this browser (requires HTTPS or localhost).");
+          setFaceError(
+            "Camera API is not supported in this browser (requires HTTPS or localhost).",
+          );
           setCameraActive(false);
           return;
         }
@@ -89,12 +91,19 @@ const Settings = () => {
         try {
           try {
             stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+              video: {
+                facingMode: "user",
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+              },
               audio: false,
             });
           } catch (e) {
             console.warn("Fallback to generic video constraint:", e);
-            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
           }
 
           if (isCancelled) {
@@ -115,12 +124,22 @@ const Settings = () => {
           }
         } catch (err) {
           console.error("Camera access error:", err);
-          if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-            setFaceError("Camera access denied. Please allow camera permissions in your browser address bar.");
-          } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+          if (
+            err.name === "NotAllowedError" ||
+            err.name === "PermissionDeniedError"
+          ) {
+            setFaceError(
+              "Camera access denied. Please allow camera permissions in your browser address bar.",
+            );
+          } else if (
+            err.name === "NotFoundError" ||
+            err.name === "DevicesNotFoundError"
+          ) {
             setFaceError("No camera device detected on your system.");
           } else if (err.name === "NotReadableError") {
-            setFaceError("Camera is currently in use by another app. Please close other camera apps and retry.");
+            setFaceError(
+              "Camera is currently in use by another app. Please close other camera apps and retry.",
+            );
           } else {
             setFaceError(`Camera error: ${err.message || "Unknown error"}`);
           }
@@ -181,6 +200,26 @@ const Settings = () => {
       setProfileImagePreview(URL.createObjectURL(file));
     }
   };
+  
+  const handleDeleteProfileImage = async () => {
+  try {
+    const response = await api.delete("/accounts/profile/");
+
+    console.log("Profile image deleted:", response.data);
+
+    // Reset preview to default image
+    setProfileImagePreview(null);
+
+    // Refresh profile data
+    await fetchProfile();
+
+  } catch (error) {
+    console.error(
+      "Failed to delete profile image:",
+      error.response?.data || error
+    );
+  }
+};
 
   // Face Recognition Capture & Enroll
   const handleCaptureFace = async () => {
@@ -213,13 +252,16 @@ const Settings = () => {
           has_face_registered: true,
           is_face_login_enabled: true,
         });
-        setFaceMsg("Face successfully enrolled! You can now log in using your face.");
+        setFaceMsg(
+          "Face successfully enrolled! You can now log in using your face.",
+        );
         setCameraActive(false);
       }
     } catch (err) {
       console.error("Face registration failed:", err);
       setFaceError(
-        err.response?.data?.message || "No face detected or enrollment failed. Try again with clear lighting."
+        err.response?.data?.message ||
+          "No face detected or enrollment failed. Try again with clear lighting.",
       );
     } finally {
       setCapturing(false);
@@ -240,14 +282,18 @@ const Settings = () => {
       }
     } catch (err) {
       console.error("Toggle face login failed:", err);
-      setFaceError(err.response?.data?.message || "Could not toggle face login.");
+      setFaceError(
+        err.response?.data?.message || "Could not toggle face login.",
+      );
     }
   };
 
   // Delete Account
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== currentUser?.username) {
-      setDeleteError(`Type your exact username "@${currentUser?.username}" to confirm.`);
+      setDeleteError(
+        `Type your exact username "@${currentUser?.username}" to confirm.`,
+      );
       return;
     }
     if (!deletePassword) {
@@ -263,7 +309,8 @@ const Settings = () => {
       window.location.href = "/login";
     } catch (err) {
       setDeleteError(
-        err.response?.data?.message || "Failed to delete account. Please check your password."
+        err.response?.data?.message ||
+          "Failed to delete account. Please check your password.",
       );
     } finally {
       setDeleteLoading(false);
@@ -272,7 +319,12 @@ const Settings = () => {
 
   // Delete Face Data
   const handleDeleteFaceData = async () => {
-    if (!window.confirm("Are you sure you want to remove your facial recognition data?")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to remove your facial recognition data?",
+      )
+    )
+      return;
     try {
       setFaceError("");
       const res = await api.delete("/accounts/profile/face-settings/");
@@ -296,9 +348,12 @@ const Settings = () => {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div className="border-b border-slate-800 pb-4">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Account Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+            Account Settings
+          </h1>
           <p className="text-sm text-gray-400 mt-1">
-            Manage your personal profile and configure optional facial recognition login.
+            Manage your personal profile and configure optional facial
+            recognition login.
           </p>
         </div>
 
@@ -315,8 +370,18 @@ const Settings = () => {
                 : "border-transparent text-gray-400 hover:text-gray-200"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
             <span>Profile Details</span>
           </button>
@@ -329,8 +394,18 @@ const Settings = () => {
                 : "border-transparent text-gray-400 hover:text-gray-200"
             }`}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
             </svg>
             <span>Face Recognition ID</span>
           </button>
@@ -349,7 +424,9 @@ const Settings = () => {
               {/* Profile Image Picker */}
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
                 <img
-                  src={profileImagePreview || "/media/blank-profile-picture.png"}
+                  src={
+                    profileImagePreview || "/media/blank-profile-picture.png"
+                  }
                   alt="avatar"
                   className="w-24 h-24 rounded-2xl object-cover border-2 border-slate-700"
                 />
@@ -362,13 +439,26 @@ const Settings = () => {
                     className="hidden"
                     id="avatar-upload"
                   />
+                  <div className="flex flex-wrap gap-2">
                   <label
                     htmlFor="avatar-upload"
                     className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold px-4 py-2 rounded-xl text-xs border border-slate-700 transition"
                   >
                     Change Profile
                   </label>
-                  <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF, max 5MB.</p>
+
+                  {/* Remove Profile Button */}
+                  <button
+                    type="button"
+                    onClick={handleDeleteProfileImage}
+                    className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition"
+                  >
+                    Remove Profile
+                  </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    JPG, PNG or GIF, max 5MB.
+                  </p>
                 </div>
               </div>
 
@@ -416,8 +506,12 @@ const Settings = () => {
               {/* Privacy Toggle */}
               <div className="flex items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-xl">
                 <div>
-                  <p className="text-sm font-semibold text-white">Private Account</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Only approved followers can see your posts</p>
+                  <p className="text-sm font-semibold text-white">
+                    Private Account
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Only approved followers can see your posts
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -427,8 +521,14 @@ const Settings = () => {
                     setPrivacyLoading(true);
                     setPrivacyMsg("");
                     try {
-                      await api.patch("/accounts/profile/", { is_private: newVal });
-                      setPrivacyMsg(newVal ? "Account set to private." : "Account set to public.");
+                      await api.patch("/accounts/profile/", {
+                        is_private: newVal,
+                      });
+                      setPrivacyMsg(
+                        newVal
+                          ? "Account set to private."
+                          : "Account set to public.",
+                      );
                     } catch (err) {
                       setIsPrivate(!newVal);
                       setPrivacyMsg("Failed to update privacy setting.");
@@ -440,11 +540,15 @@ const Settings = () => {
                   disabled={privacyLoading}
                   className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none ${isPrivate ? "bg-teal-500" : "bg-slate-700"}`}
                 >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isPrivate ? "translate-x-5" : "translate-x-0"}`} />
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${isPrivate ? "translate-x-5" : "translate-x-0"}`}
+                  />
                 </button>
               </div>
               {privacyMsg && (
-                <p className={`text-xs ${privacyMsg.includes("Failed") ? "text-rose-400" : "text-teal-400"}`}>
+                <p
+                  className={`text-xs ${privacyMsg.includes("Failed") ? "text-rose-400" : "text-teal-400"}`}
+                >
                   {privacyMsg}
                 </p>
               )}
@@ -467,9 +571,12 @@ const Settings = () => {
         {activeTab === "face" && (
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
             <div>
-              <h2 className="text-lg font-bold text-white">Face Recognition Authentication</h2>
+              <h2 className="text-lg font-bold text-white">
+                Face Recognition Authentication
+              </h2>
               <p className="text-sm text-gray-400 mt-1">
-                Use your webcam to register your face for fast, passwordless biometric login.
+                Use your webcam to register your face for fast, passwordless
+                biometric login.
               </p>
             </div>
 
@@ -491,11 +598,15 @@ const Settings = () => {
                 <div className="flex items-center space-x-2">
                   <span
                     className={`w-3 h-3 rounded-full ${
-                      faceStatus.has_face_registered ? "bg-emerald-400" : "bg-gray-500"
+                      faceStatus.has_face_registered
+                        ? "bg-emerald-400"
+                        : "bg-gray-500"
                     }`}
                   />
                   <p className="font-semibold text-white text-sm">
-                    {faceStatus.has_face_registered ? "Face Enrolled" : "No Face Enrolled"}
+                    {faceStatus.has_face_registered
+                      ? "Face Enrolled"
+                      : "No Face Enrolled"}
                   </p>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">
@@ -507,7 +618,9 @@ const Settings = () => {
 
               {faceStatus.has_face_registered && (
                 <div className="flex items-center space-x-3">
-                  <label className="text-xs text-gray-300 font-medium">Enable Face Login:</label>
+                  <label className="text-xs text-gray-300 font-medium">
+                    Enable Face Login:
+                  </label>
                   <input
                     type="checkbox"
                     checked={faceStatus.is_face_login_enabled}
@@ -521,7 +634,9 @@ const Settings = () => {
             {/* Webcam Live Enrollment Section */}
             <div className="space-y-4 pt-2">
               <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider">
-                {faceStatus.has_face_registered ? "Update Registered Face" : "Enroll Face Now"}
+                {faceStatus.has_face_registered
+                  ? "Update Registered Face"
+                  : "Enroll Face Now"}
               </h3>
 
               {!cameraActive ? (
@@ -530,8 +645,18 @@ const Settings = () => {
                   onClick={() => setCameraActive(true)}
                   className="bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold px-5 py-2.5 rounded-xl text-sm border border-slate-700 transition flex items-center space-x-2"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
                   </svg>
                   <span>Open Camera to Register Face</span>
                 </button>
@@ -591,8 +716,18 @@ const Settings = () => {
                   onClick={handleDeleteFaceData}
                   className="text-xs text-red-400 hover:text-red-300 hover:underline flex items-center space-x-1"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                   <span>Remove Registered Facial Data</span>
                 </button>
@@ -604,30 +739,52 @@ const Settings = () => {
         {/* Danger Zone — always visible */}
         <div className="bg-slate-900 border border-red-900/40 rounded-3xl p-6 shadow-xl">
           <div className="flex items-center space-x-3 mb-4">
-            <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              className="w-5 h-5 text-red-400 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
             <h2 className="text-base font-bold text-red-400">Danger Zone</h2>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-950 border border-red-900/30 rounded-2xl">
             <div>
-              <p className="text-sm font-semibold text-white">Delete My Account</p>
+              <p className="text-sm font-semibold text-white">
+                Delete My Account
+              </p>
               <p className="text-xs text-gray-400 mt-0.5">
-                Permanently delete your account, all posts, messages, and followers. This cannot be undone.
+                Permanently delete your account, all posts, messages, and
+                followers. This cannot be undone.
               </p>
             </div>
             <button
               onClick={() => setShowDeleteModal(true)}
               className="flex-shrink-0 flex items-center space-x-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 hover:text-red-300 font-semibold px-4 py-2.5 rounded-xl text-sm border border-red-600/30 hover:border-red-500/50 transition"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
               <span>Delete Account</span>
             </button>
           </div>
         </div>
-
       </main>
 
       {/* Delete Account Confirmation Modal */}
@@ -637,14 +794,29 @@ const Settings = () => {
             {/* Header */}
             <div className="flex items-start space-x-3">
               <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-5 h-5 text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white">Delete Account</h3>
                 <p className="text-sm text-gray-400 mt-0.5">
-                  This action is <span className="text-red-400 font-semibold">permanent and irreversible</span>. All your posts, followers, messages, and data will be deleted forever.
+                  This action is{" "}
+                  <span className="text-red-400 font-semibold">
+                    permanent and irreversible
+                  </span>
+                  . All your posts, followers, messages, and data will be
+                  deleted forever.
                 </p>
               </div>
             </div>
@@ -663,7 +835,10 @@ const Settings = () => {
               <input
                 type="text"
                 value={deleteConfirmText}
-                onChange={(e) => { setDeleteConfirmText(e.target.value); setDeleteError(""); }}
+                onChange={(e) => {
+                  setDeleteConfirmText(e.target.value);
+                  setDeleteError("");
+                }}
                 placeholder={`@${currentUser?.username}`}
                 className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500 transition"
               />
@@ -677,7 +852,10 @@ const Settings = () => {
               <input
                 type="password"
                 value={deletePassword}
-                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                onChange={(e) => {
+                  setDeletePassword(e.target.value);
+                  setDeleteError("");
+                }}
                 placeholder="Your current password"
                 className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500 transition"
               />
@@ -687,7 +865,11 @@ const Settings = () => {
             <div className="flex items-center space-x-3 pt-1">
               <button
                 onClick={handleDeleteAccount}
-                disabled={deleteLoading || deleteConfirmText !== currentUser?.username || !deletePassword}
+                disabled={
+                  deleteLoading ||
+                  deleteConfirmText !== currentUser?.username ||
+                  !deletePassword
+                }
                 className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-2.5 rounded-xl text-sm transition flex items-center justify-center space-x-2"
               >
                 {deleteLoading ? (
@@ -697,15 +879,30 @@ const Settings = () => {
                   </>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
                     <span>Permanently Delete My Account</span>
                   </>
                 )}
               </button>
               <button
-                onClick={() => { setShowDeleteModal(false); setDeletePassword(""); setDeleteConfirmText(""); setDeleteError(""); }}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword("");
+                  setDeleteConfirmText("");
+                  setDeleteError("");
+                }}
                 className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-gray-300 rounded-xl text-sm transition"
               >
                 Cancel

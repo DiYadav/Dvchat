@@ -71,6 +71,32 @@ class MyProfileAPIView(APIView):
             {"status": "error", "errors": serializer.errors},
             status=status.HTTP_400_BAD_REQUEST,
         )
+    
+    def delete(self, request):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+
+        # Check whether a custom profile image exists
+        if profile.profileimg:
+            # Delete the existing image from storage
+            profile.profileimg.delete(save=False)
+
+        # Set the default profile image
+        profile.profileimg = "blank-profile-picture.png"
+        profile.save(update_fields=["profileimg"])
+
+        serializer = MyProfileSerializer(
+            profile,
+            context={"request": request}
+        )
+
+        return Response(
+            {
+                "status": "success",
+                "message": "Profile image deleted successfully.",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class FaceSettingsAPIView(APIView):
@@ -765,3 +791,37 @@ class CommentReplyAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+# class DeleteAccountAPIView(APIView):
+#     """
+#     DELETE /accounts/delete-account/
+#     Permanently deletes the authenticated user's account and all associated data.
+#     Requires password confirmation via POST body: { "password": "..." }
+#     """
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         password = request.data.get("password", "")
+#         if not password:
+#             return Response(
+#                 {"status": "error", "message": "Password is required to confirm account deletion."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         # Verify password before deleting
+#         if not request.user.check_password(password):
+#             return Response(
+#                 {"status": "error", "message": "Incorrect password. Please try again."},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+#         user = request.user
+#         username = user.username
+#         # Deleting the User cascades to Profile, Follow, Post, Comment, Notification, etc.
+#         user.delete()
+
+#         return Response(
+#             {"status": "success", "message": f"Account @{username} has been permanently deleted."},
+#             status=status.HTTP_200_OK,
+#         )
