@@ -227,6 +227,11 @@ class UserProfileDetailAPIView(APIView):
         posts = Post.objects.filter(author=target_user).order_by("-created_at")
         posts_data = PostSerializer(posts, many=True, context={"request": request}).data
 
+        # Hide posts for private accounts the viewer doesn't follow
+        is_private = profile.is_private
+        if is_private and not (target_user == request.user) and follow_status != "accepted":
+            posts_data = []
+
         profileimg = (
             make_absolute_url(request, profile.profileimg.url)
             if profile.profileimg
@@ -249,6 +254,7 @@ class UserProfileDetailAPIView(APIView):
                     "is_self": target_user == request.user,
                     "followers_count": followers_count,
                     "following_count": following_count,
+                    "is_private": profile.is_private,
                     "posts": posts_data,
                 },
             },
@@ -427,7 +433,14 @@ class FollowersListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        follower_users = User.objects.filter(following_set__following=request.user, following_set__status="accepted")
+        username = request.query_params.get("username", "").strip()
+        if username:
+            target_user = User.objects.filter(username__iexact=username).first()
+            if not target_user:
+                return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            target_user = request.user
+        follower_users = User.objects.filter(following_set__following=target_user, following_set__status="accepted")
         serializer = UserCardSerializer(follower_users, many=True, context={"request": request})
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -436,7 +449,14 @@ class FollowingListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        following_users = User.objects.filter(follower_set__follower=request.user, follower_set__status="accepted")
+        username = request.query_params.get("username", "").strip()
+        if username:
+            target_user = User.objects.filter(username__iexact=username).first()
+            if not target_user:
+                return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            target_user = request.user
+        following_users = User.objects.filter(follower_set__follower=target_user, follower_set__status="accepted")
         serializer = UserCardSerializer(following_users, many=True, context={"request": request})
         return Response({"status": "success", "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -672,6 +692,7 @@ class CommentCreateAPIView(APIView):
                     sender=request.user,
                     notification_type="comment",
                     post=post,
+                    comment=comment,
                     text=f"commented: {str(text).strip()[:40]}",
                 )
             except Exception:

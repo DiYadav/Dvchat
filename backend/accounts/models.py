@@ -11,6 +11,7 @@ class Profile(models.Model):
     face_image = models.ImageField(upload_to="user_faces/", null=True, blank=True)
     face_encoding = models.BinaryField(null=True, blank=True)
     is_face_login_enabled = models.BooleanField(default=False)
+    is_private = models.BooleanField(default=False)
     
     def __str__(self):
         return self.user.username
